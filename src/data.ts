@@ -220,3 +220,12 @@ export async function setVehicleStop(stop: VehicleStop): Promise<void> {
     stop
   );
 }
+
+export async function hasVehicleStop(
+  vehicle: string,
+  date: number
+): Promise<boolean> {
+  const stops =
+    await database`SELECT 1 FROM vehicle_stops WHERE vehicle_id = ${vehicle} AND date = ${date} LIMIT 1;`;
+  return stops.length > 0;
+}

@@ -5,4 +5,10 @@ import * as scheduler from "./scheduler";
 
 await config.importConfigFiles();
 
-await scheduler.startScheduler();
+if (Bun.argv.includes("--scheduler")) {
+  await scheduler.startScheduler();
+}
+
+if (Bun.argv.includes("--wake")) {
+  await scheduler.wake();
+}
