@@ -137,6 +137,13 @@ export function toTime(date: string | number | Date) {
   return date.getHours() * 100 + date.getMinutes();
 }
 
+export async function compositionApi(params: {
+  id: string;
+  date: string;
+}): Promise<CompositionResponse> {
+  return requestApi("/composition", { query: params });
+}
+
 export type VehicleResponse = {
   version: string;
   timestamp: string;
@@ -186,5 +193,71 @@ export type VehicleResponse = {
       };
       departureConnection?: string;
     }>;
+  };
+};
+
+export type CompositionResponse = {
+  version: string;
+  timestamp: string;
+  composition: {
+    segments: {
+      number: string;
+      segment: Array<{
+        id: string;
+        origin: {
+          locationX: string;
+          locationY: string;
+          id: string;
+          name: string;
+          "@id": string;
+          standardname: string;
+        };
+        destination: {
+          locationX: string;
+          locationY: string;
+          id: string;
+          name: string;
+          "@id": string;
+          standardname: string;
+        };
+        composition: {
+          source: string;
+          units: {
+            number: string;
+            unit: Array<{
+              id: string;
+              materialType: {
+                parent_type: string;
+                sub_type: string;
+                orientation: string;
+              };
+              hasToilets: string;
+              hasTables: string;
+              hasSecondClassOutlets: string;
+              hasFirstClassOutlets: string;
+              hasHeating: string;
+              hasAirco: string;
+              materialNumber: string;
+              tractionType: string;
+              canPassToNextUnit: string;
+              standingPlacesSecondClass: string;
+              standingPlacesFirstClass: string;
+              seatsCoupeSecondClass: string;
+              seatsCoupeFirstClass: string;
+              seatsSecondClass: string;
+              seatsFirstClass: string;
+              lengthInMeter: string;
+              hasSemiAutomaticInteriorDoors: string;
+              hasLuggageSection: string;
+              materialSubTypeName: string;
+              tractionPosition: string;
+              hasPrmSection: string;
+              hasPriorityPlaces: string;
+              hasBikeSection: string;
+            }>;
+          };
+        };
+      }>;
+    };
   };
 };

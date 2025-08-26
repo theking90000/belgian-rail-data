@@ -37,6 +37,7 @@ export async function setupDB(db: SQL, name: string, stmt: string[]) {
 setupDB(database, "data.sql", [
   "CREATE TABLE vehicle (id VARCHAR(30) PRIMARY KEY, vehicle_start INT, vehicle_end INT, station_start TEXT, station_end TEXT, stop_count INT);",
   "CREATE TABLE vehicle_stops (vehicle_id VARCHAR(30), date INT, stop_index INT, station_name TEXT, platform VARCHAR(10), scheduled_arrival_time INT, scheduled_departure_time INT, delay INT, departure_delay INT, departure_canceled BOOLEAN, arrival_delay INT, arrival_canceled BOOLEAN, occupancy VARCHAR(20), PRIMARY KEY (vehicle_id, date, stop_index));",
+  "CREATE TABLE vehicle_composition (vehicle_id VARCHAR(30), date INT, material VARCHAR(30), units INT, m_detailed TEXT, PRIMARY KEY (vehicle_id, date))",
 ]);
 
 function getProperty<T extends any = any>(obj: T, prop: string | string[]) {
@@ -83,11 +84,6 @@ export async function insertOrUpdate<T>(
     .filter((k) => !primaryKey.includes(k))
     .map((k) => `${k} = excluded.${k}`)
     .join(", ");
-
-  // console.log(
-  //   `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${values}) ` +
-  //     `ON CONFLICT(${primaryKey.join(", ")}) DO UPDATE SET ${excluded}`
-  // );
 
   await database
     .unsafe(
@@ -228,4 +224,45 @@ export async function hasVehicleStop(
   const stops =
     await database`SELECT 1 FROM vehicle_stops WHERE vehicle_id = ${vehicle} AND date = ${date} LIMIT 1;`;
   return stops.length > 0;
+}
+
+type VehicleComposition = {
+  vehicleId: string;
+  date: number;
+  material: string;
+  units: number;
+  detailed: string;
+};
+
+const VehicleCompositionMapper = {
+  vehicle_id: "vehicleId",
+  date: "date",
+  material: "material",
+  units: "units",
+  m_detailed: "detailed",
+};
+
+export async function getVehicleComposition(
+  vehicleId: string,
+  date: number
+): Promise<VehicleComposition | null> {
+  const result = await get(
+    "vehicle_composition",
+    VehicleCompositionMapper,
+    "vehicle_id = $1 AND date = $2",
+    [vehicleId, date]
+  );
+  if (result.length === 0) return null;
+  return result[0];
+}
+
+export async function setVehicleComposition(
+  composition: VehicleComposition
+): Promise<void> {
+  await insertOrUpdate(
+    "vehicle_composition",
+    VehicleCompositionMapper,
+    ["vehicle_id", "date"],
+    composition
+  );
 }

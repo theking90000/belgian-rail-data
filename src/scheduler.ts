@@ -43,9 +43,9 @@ async function run(state: SchedulerState) {
 
   for (const vehicle of tVehicles) {
     try {
-      if (!(await data.getVehicleInfo(vehicle))) {
-        await fetchVehicle(vehicle, date);
-      }
+      // if (!(await data.getVehicleInfo(vehicle))) {
+      //   await fetchVehicle(vehicle, date);
+      // }
 
       if (!(await data.hasVehicleStop(vehicle, parseInt(yesterday, 10)))) {
         await fetchVehicle(vehicle, yesterday);
@@ -59,6 +59,8 @@ async function run(state: SchedulerState) {
 }
 
 async function fetchVehicle(vehicle: string, date: string) {
+  console.log(" * fetching vehicle", vehicle, "at", date);
+
   const info = await irail.vehicleApi({ id: vehicle, date });
 
   if (!info.stops.stop[0]) {
@@ -102,4 +104,29 @@ async function fetchVehicle(vehicle: string, date: string) {
       stationName: stop.station,
     });
   }
+
+  // Fetch composition
+  console.log(" * fetching vehicle compositon", vehicle, "at", date);
+
+  const composition = await irail.compositionApi({ id: vehicle, date });
+
+  const comp = composition.composition.segments.segment[0]!.composition;
+
+  const units = comp.units.unit.filter((x) => x.tractionType !== "HLE");
+  const material = units.map((m) => m.materialType.parent_type);
+  const modeMaterial = material
+    .sort(
+      (a, b) =>
+        material.filter((v) => v === a).length -
+        material.filter((v) => v === b).length
+    )
+    .pop();
+
+  await data.setVehicleComposition({
+    date: parseInt(date, 10),
+    vehicleId: vehicle,
+    units: units.length,
+    material: modeMaterial || "unknown",
+    detailed: JSON.stringify(composition.composition.segments),
+  });
 }

@@ -12,3 +12,7 @@ if (Bun.argv.includes("--scheduler")) {
 if (Bun.argv.includes("--wake")) {
   await scheduler.wake();
 }
+
+if (Bun.argv.includes("--server")) {
+  await import("./server");
+}
