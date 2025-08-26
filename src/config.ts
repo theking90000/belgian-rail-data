@@ -18,9 +18,7 @@ export async function importConfigFiles() {
       }
     });
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
-      throw err;
-    }
+    console.error(err);
   }
 }
 

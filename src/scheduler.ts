@@ -19,7 +19,14 @@ async function wake(state: SchedulerState) {
   for (const vehicle of tVehicles) {
     if (await data.getVehicleInfo(vehicle)) continue;
 
-    const info = await irail.vehicleApi({ id: vehicle });
+    let now = new Date();
+    let date = `${now.getDate().toString().padStart(2, "0")}${(
+      now.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}${now.getFullYear().toString().slice(-2)}`;
+
+    const info = await irail.vehicleApi({ id: vehicle, date });
 
     if (!info.stops.stop[0]) {
       console.log(" *** Cannot find start station for vehicle", vehicle);
@@ -39,5 +46,28 @@ async function wake(state: SchedulerState) {
         at: irail.toTime(lastStop.scheduledDepartureTime),
       },
     });
+
+    for (let i = 0; i < info.stops.stop.length; i++) {
+      const stop = info.stops.stop[i]!;
+
+      await data.setVehicleStop({
+        stopIndex: i,
+        date: parseInt(date, 10),
+        vehicleId: vehicle,
+
+        arrivalDelay: parseInt(stop.arrivalDelay, 10),
+        arrivalCanceled: stop.arrivalCanceled === "1",
+        delay: parseInt(stop.delay, 10),
+        platform: stop.platform,
+
+        departureCanceled: stop.arrivalCanceled === "1",
+        departureDelay: parseInt(stop.departureDelay),
+        occupancy: stop.occupancy?.name || "unknown",
+
+        scheduledArrivalTime: irail.toTime(stop.scheduledArrivalTime),
+        scheduledDepartureTime: irail.toTime(stop.scheduledDepartureTime),
+        stationName: stop.station,
+      });
+    }
   }
 }

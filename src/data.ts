@@ -36,7 +36,88 @@ export async function setupDB(db: SQL, name: string, stmt: string[]) {
 
 setupDB(database, "data.sql", [
   "CREATE TABLE vehicle (id VARCHAR(30) PRIMARY KEY, vehicle_start INT, vehicle_end INT, station_start TEXT, station_end TEXT, stop_count INT);",
+  "CREATE TABLE vehicle_stops (vehicle_id VARCHAR(30), date INT, stop_index INT, station_name TEXT, platform VARCHAR(10), scheduled_arrival_time INT, scheduled_departure_time INT, delay INT, departure_delay INT, departure_canceled BOOLEAN, arrival_delay INT, arrival_canceled BOOLEAN, occupancy VARCHAR(20), PRIMARY KEY (vehicle_id, date, stop_index));",
 ]);
+
+function getProperty<T extends any = any>(obj: T, prop: string | string[]) {
+  if (!Array.isArray(prop)) prop = prop.split(".");
+
+  if (prop.length === 0) return obj;
+  if (obj === undefined || obj === null) return obj;
+
+  return getProperty(obj[prop[0] as keyof T], prop.slice(1));
+}
+
+function setProperty(obj: any, prop: string | string[], value: any) {
+  if (!Array.isArray(prop)) prop = prop.split(".");
+
+  if (prop.length === 0) return value;
+  if (prop.length > 1 && !(prop[0]! in obj)) {
+    obj[prop[0]!] = {};
+  }
+  if (prop.length === 1) {
+    obj[prop[0]!] = value;
+  }
+
+  return setProperty(obj[prop[0]!], prop.slice(1), value);
+}
+
+export async function insertOrUpdate<T>(
+  table: string,
+  fields: Record<string, string>,
+  primaryKey: string[] | string,
+  data: T
+) {
+  if (!Array.isArray(primaryKey)) primaryKey = [primaryKey];
+
+  const keys = Object.keys(fields);
+
+  const values = keys.map((_, i) => `$${i + 1}`).join(", ");
+  const valuesBind = [];
+
+  for (const key of keys) {
+    valuesBind.push(getProperty(data, fields[key] as string));
+  }
+
+  const excluded = keys
+    .filter((k) => !primaryKey.includes(k))
+    .map((k) => `${k} = excluded.${k}`)
+    .join(", ");
+
+  // console.log(
+  //   `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${values}) ` +
+  //     `ON CONFLICT(${primaryKey.join(", ")}) DO UPDATE SET ${excluded}`
+  // );
+
+  await database
+    .unsafe(
+      `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${values}) ` +
+        `ON CONFLICT(${primaryKey.join(", ")}) DO UPDATE SET ${excluded}`,
+      valuesBind
+    )
+    .execute();
+}
+
+export async function get<T>(
+  table: string,
+  fields: Record<string, string>,
+  where: string = "1=1",
+  whereArgs: any[] = []
+) {
+  const keys = Object.keys(fields);
+
+  const rows = await database
+    .unsafe(`SELECT ${keys.join(", ")} FROM ${table} WHERE ${where}`, whereArgs)
+    .values();
+
+  return await rows.map((row: any[]) => {
+    const obj = {};
+    for (let i = 0; i < keys.length; i++) {
+      setProperty(obj, fields[keys[i] as keyof typeof fields]!, row[i]);
+    }
+    return obj;
+  });
+}
 
 type StationTime = {
   station: string;
@@ -44,31 +125,98 @@ type StationTime = {
 };
 type VehicleInfo = { start: StationTime; end: StationTime; stopCount: number };
 
-export async function getVehicleInfo(id: string): Promise<VehicleInfo | null> {
-  const data =
-    await database`SELECT vehicle_start, station_start, vehicle_end, station_end, stop_count FROM vehicle WHERE id = ${id}`.values();
-
-  if (data.length === 0) return null;
-
-  return {
-    start: { station: data[0][1], at: data[0][0] },
-    end: { station: data[0][3], at: data[0][2] },
-    stopCount: data[0][4],
-  };
-}
+const VehicleInfoMapper = {
+  id: "id",
+  vehicle_start: "start.at",
+  vehicle_end: "end.at",
+  station_start: "start.station",
+  station_end: "end.station",
+  stop_count: "stopCount",
+};
 
 export async function setVehicleInfo(
   id: string,
   info: VehicleInfo
 ): Promise<void> {
-  await database`
-    INSERT INTO vehicle (id, vehicle_start, station_start, vehicle_end, station_end, stop_count)
-    VALUES (${id}, ${info.start.at}, ${info.start.station}, ${info.end.at}, ${info.end.station}, ${info.stopCount})
-    ON CONFLICT(id) DO UPDATE SET
-      vehicle_start = excluded.vehicle_start,
-      station_start = excluded.station_start,
-      vehicle_end = excluded.vehicle_end,
-      station_end = excluded.station_end,
-      stop_count = excluded.stop_count
-  `;
+  await insertOrUpdate("vehicle", VehicleInfoMapper, ["id"], {
+    id,
+    ...info,
+  });
+}
+
+export async function getVehicleInfo(id: string): Promise<VehicleInfo | null> {
+  const vehicle = await get("vehicle", VehicleInfoMapper, "id = $1", [id]);
+  if (vehicle.length === 0) return null;
+
+  return vehicle[0];
+}
+
+type VehicleStop = {
+  vehicleId: string;
+  date: number;
+  stopIndex: number;
+  stationName: string;
+  platform: string;
+  scheduledArrivalTime: number;
+  scheduledDepartureTime: number;
+  delay: number;
+  departureDelay: number;
+  departureCanceled: boolean;
+  arrivalDelay: number;
+  arrivalCanceled: boolean;
+  occupancy: string;
+};
+
+const VehicleStopMapper = {
+  vehicle_id: "vehicleId",
+  date: "date",
+  stop_index: "stopIndex",
+  station_name: "stationName",
+  platform: "platform",
+  scheduled_arrival_time: "scheduledArrivalTime",
+  scheduled_departure_time: "scheduledDepartureTime",
+  delay: "delay",
+  departure_delay: "departureDelay",
+  departure_canceled: "departureCanceled",
+  arrival_delay: "arrivalDelay",
+  arrival_canceled: "arrivalCanceled",
+  occupancy: "occupancy",
+};
+
+export async function getVehicleStop(
+  vehicleId: string,
+  date: number,
+  stopIndex: number
+): Promise<VehicleStop | null> {
+  const stops = await get(
+    "vehicle_stops",
+    VehicleStopMapper,
+    "vehicle_id = $1 AND date = $2 AND stop_index = $3",
+    [vehicleId, date, stopIndex]
+  );
+  if (stops.length === 0) return null;
+  return stops[0];
+}
+
+export async function getVehicleStops(
+  vehicleId: string,
+  date: number
+): Promise<VehicleStop | null> {
+  const stops = await get(
+    "vehicle_stops",
+    VehicleStopMapper,
+    "vehicle_id = $1 AND date = $2 ORDER BY stop_index",
+    [vehicleId, date, vehicleId]
+  );
+  if (stops.length === 0) return null;
+  return stops[0];
+}
+
+export async function setVehicleStop(stop: VehicleStop): Promise<void> {
+  await insertOrUpdate(
+    "vehicle_stops",
+    VehicleStopMapper,
+    ["vehicle_id", "date", "stop_index"],
+    stop
+  );
 }

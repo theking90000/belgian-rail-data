@@ -44,7 +44,6 @@ export class RateLimiter {
             r.at ? r.at - windowStart : this.#window * 1000
           )
         );
-        console.log(" * $wait to ", minTime);
         this.#timer = setTimeout(() => {
           this.#timer = undefined;
           this.#processQueue();
@@ -119,7 +118,7 @@ export async function requestApi<T>(
 
 export function vehicleApi(params: {
   id: string;
-  date?: number;
+  date?: string;
 }): Promise<VehicleResponse> {
   return requestApi("/vehicle", { query: params });
 }
