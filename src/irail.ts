@@ -131,10 +131,35 @@ export function parseDate(date: string | number | Date): Date {
 }
 
 /** Convert to hours+minutes as hours*100+minutes */
-export function toTime(date: string | number | Date) {
+export function toTime(date: string | number | Date, display = false): string {
   date = parseDate(date);
 
-  return date.getHours() * 100 + date.getMinutes();
+  return (
+    date.getHours().toString().padStart(2, "0") +
+    (display ? "h" : "") +
+    date.getMinutes().toString().padStart(2, "0")
+  );
+}
+
+export function toDate(date: string | number | Date): string {
+  date = parseDate(date);
+
+  return (
+    date.getDate().toString().padStart(2, "0") +
+    (date.getMonth() + 1).toString().padStart(2, "0") +
+    date.getFullYear().toString().slice(-2)
+  );
+}
+
+export function parseDelay(delay: string | number): number {
+  if (typeof delay === "number") return delay;
+  return parseInt(delay, 10) / 60;
+}
+
+export function formatDelay(delay: string | number): string {
+  delay = parseDelay(delay);
+  if (delay < 0) return delay.toString(10);
+  return "+" + delay.toString(10);
 }
 
 export async function compositionApi(params: {
@@ -261,3 +286,219 @@ export type CompositionResponse = {
     };
   };
 };
+export type ConnectionsResponse = {
+  version: string;
+  timestamp: number;
+  connection: Array<{
+    id: number;
+    departure: {
+      delay: number;
+      station: string;
+      stationinfo: {
+        id: string;
+        "@id": string;
+        locationX: number;
+        locationY: number;
+        standardname: string;
+        name: string;
+      };
+      time: number;
+      vehicle: string;
+      vehicleinfo: {
+        name: string;
+        shortname: string;
+        "@id": string;
+      };
+      platform: number;
+      platforminfo: {
+        name: string;
+        normal: string;
+      };
+      left: number;
+      canceled: number;
+      direction: {
+        name: string;
+      };
+      stops: {
+        number: number;
+        stop: Array<{
+          id: number | string;
+          station: string;
+          stationinfo: {
+            id: string;
+            "@id": string;
+            locationX: number;
+            locationY: number;
+            standardname: string;
+            name: string;
+          };
+          time: number;
+          delay: number;
+          canceled: number;
+          departureDelay: number;
+          departureCanceled: number;
+          scheduledDepartureTime: number;
+          arrivalDelay: number;
+          arrivalCanceled: number;
+          isExtraStop: number;
+          scheduledArrivalTime: number;
+          departureConnection: string;
+        }>;
+      };
+      alerts: {
+        number: number;
+        alert: Array<{
+          id: number;
+          header: string;
+          lead: string;
+          link: string;
+          startTime: number;
+          endTime: number;
+        }>;
+      };
+      walking: number;
+      departureConnection: string;
+    };
+    arrival: {
+      delay: number;
+      station: string;
+      stationinfo: {
+        id: string;
+        "@id": string;
+        locationX: number;
+        locationY: number;
+        standardname: string;
+        name: string;
+      };
+      time: number;
+      vehicle: string;
+      vehicleinfo: {
+        name: string;
+        shortname: string;
+        "@id": string;
+      };
+      platform: number;
+      platforminfo: {
+        name: string;
+        normal: string;
+      };
+      arrived: number;
+      canceled: number;
+      walking: number;
+      direction: {
+        name: string;
+      };
+    };
+    duration: number;
+    alerts: {
+      number: number;
+      alert: Array<{
+        id: number;
+        header: string;
+        lead: string;
+        link: string;
+        startTime: number;
+        endTime: number;
+      }>;
+    };
+    vias: {
+      number: number;
+      via: Array<{
+        id: string | number;
+        arrival: {
+          time: number;
+          platform: number;
+          platforminfo: {
+            name: string;
+            normal: string;
+          };
+          arrived: number;
+          delay: number;
+          canceled: number;
+          vehicle: string;
+          walking: number;
+          direction: {
+            name: string;
+          };
+        };
+        departure: {
+          time: number;
+          platform: number;
+          platforminfo: {
+            name: string;
+            normal: string;
+          };
+          left: number;
+          delay: number;
+          canceled: number;
+          departureConnection: string;
+          vehicle: string;
+          walking: number;
+          alerts: {
+            number: number;
+            alert: Array<{
+              id: number;
+              header: string;
+              lead: string;
+              link: string;
+              startTime: number;
+              endTime: number;
+            }>;
+          };
+          direction: {
+            name: string;
+          };
+          stops: {
+            number: number;
+            stop: Array<{
+              id: number | string;
+              station: string;
+              stationinfo: {
+                id: string;
+                "@id": string;
+                locationX: number;
+                locationY: number;
+                standardname: string;
+                name: string;
+              };
+              time: number;
+              delay: number;
+              canceled: number;
+              departureDelay: number;
+              departureCanceled: number;
+              scheduledDepartureTime: number;
+              arrivalDelay: number;
+              arrivalCanceled: number;
+              isExtraStop: number;
+              scheduledArrivalTime: number;
+              departureConnection: string;
+            }>;
+          };
+        };
+        timeBetween: number;
+        station: string;
+        stationinfo: {
+          id: string;
+          "@id": string;
+          locationX: number;
+          locationY: number;
+          standardname: string;
+          name: string;
+        };
+        vehicle: string;
+        direction: {
+          name: string;
+        };
+      }>;
+    };
+  }>;
+};
+
+export function connectionsApi(params: {
+  from: string;
+  to: string;
+  time?: string;
+  date?: string;
+}): Promise<ConnectionsResponse> {
+  return requestApi("/connections", { query: params });
+}

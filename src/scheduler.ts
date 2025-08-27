@@ -74,11 +74,11 @@ async function fetchVehicle(vehicle: string, date: string) {
     stopCount: parseInt(info.stops.number, 10),
     start: {
       station: firstStop.station,
-      at: irail.toTime(firstStop.scheduledDepartureTime),
+      at: parseInt(irail.toTime(firstStop.scheduledDepartureTime), 10),
     },
     end: {
       station: lastStop.station,
-      at: irail.toTime(lastStop.scheduledDepartureTime),
+      at: parseInt(irail.toTime(lastStop.scheduledDepartureTime), 10),
     },
   });
 
@@ -99,8 +99,14 @@ async function fetchVehicle(vehicle: string, date: string) {
       departureDelay: parseInt(stop.departureDelay),
       occupancy: stop.occupancy?.name || "unknown",
 
-      scheduledArrivalTime: irail.toTime(stop.scheduledArrivalTime),
-      scheduledDepartureTime: irail.toTime(stop.scheduledDepartureTime),
+      scheduledArrivalTime: parseInt(
+        irail.toTime(stop.scheduledArrivalTime),
+        10
+      ),
+      scheduledDepartureTime: parseInt(
+        irail.toTime(stop.scheduledDepartureTime),
+        10
+      ),
       stationName: stop.station,
     });
   }
