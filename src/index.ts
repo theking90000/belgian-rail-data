@@ -39,5 +39,5 @@ if (Bun.argv.includes("--from") && Bun.argv.includes("--to")) {
   const date = getArg("--date");
   const time = getArg("--time");
 
-  await tools.listConnections({ from, to, date, time });
+  await tools.listConnectionsPrint({ from, to, date, time });
 }

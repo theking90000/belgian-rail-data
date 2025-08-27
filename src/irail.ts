@@ -141,6 +141,16 @@ export function toTime(date: string | number | Date, display = false): string {
   );
 }
 
+/** Format ddmmyy time to dd/mm/yyyy */
+export function formatDisplayDate(date: string) {
+  return date.slice(0, 2) + "/" + date.slice(2, 4) + "/20" + date.slice(4);
+}
+
+/** Format hhmm time to hh'h'mm */
+export function formatDisplayTime(time: string) {
+  return time.slice(0, 2) + "h" + time.slice(2);
+}
+
 export function toDate(date: string | number | Date): string {
   date = parseDate(date);
 
@@ -160,6 +170,26 @@ export function formatDelay(delay: string | number): string {
   delay = parseDelay(delay);
   if (delay < 0) return delay.toString(10);
   return "+" + delay.toString(10);
+}
+
+export function duration(
+  time1: string /** hhmm */,
+  time2: string,
+  display = false
+): string {
+  let minutes =
+    parseInt(time2.slice(0, 2), 10) * 60 +
+    parseInt(time2.slice(2), 10) -
+    (parseInt(time1.slice(2), 10) + parseInt(time1.slice(0, 2), 10) * 60);
+
+  let hours = Math.floor(Math.abs(minutes) / 60);
+  minutes = Math.abs(minutes) % 60;
+
+  return (
+    hours.toString().padStart(2, "0") +
+    (display ? "h" : "") +
+    minutes.toString().padStart(2, "0")
+  );
 }
 
 export async function compositionApi(params: {
