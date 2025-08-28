@@ -116,7 +116,7 @@ export async function requestApi<T>(
 
   if (loggerEnabled) {
     let ms = (Bun.nanoseconds() - start) / 1000;
-    await logs.addFetchLog({ endpoint, duration: ms, statusCode: data.status });
+    await logs.addIrailLog({ endpoint, duration: ms, statusCode: data.status });
   }
 
   if (data.ok) {
