@@ -33,3 +33,9 @@ export async function getTrackedVehicles(): Promise<string[]> {
     .values()
     .then((r) => r.flat());
 }
+
+export async function getApiKey(key: string): Promise<number | null> {
+  return await config`SELECT id FROM api_keys WHERE key = ${key}`
+    .values()
+    .then((r) => (r.length > 0 ? r[0][0] : null));
+}

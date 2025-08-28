@@ -205,15 +205,15 @@ export async function getVehicleStop(
 export async function getVehicleStops(
   vehicleId: string,
   date: number
-): Promise<VehicleStop | null> {
+): Promise<VehicleStop[] | null> {
   const stops = await get(
     "vehicle_stops",
     VehicleStopMapper,
     "vehicle_id = $1 AND date = $2 ORDER BY stop_index",
-    [vehicleId, date, vehicleId]
+    [vehicleId, date]
   );
   if (stops.length === 0) return null;
-  return stops[0];
+  return stops;
 }
 
 export async function setVehicleStop(stop: VehicleStop): Promise<void> {
