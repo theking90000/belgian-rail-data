@@ -2,6 +2,12 @@ import { sql, SQL } from "bun";
 
 export const database = new SQL("sqlite://data.db");
 
+export async function createDB(name: string, stmt: string[]): Promise<SQL> {
+  const db = new SQL(`sqlite://${name}`);
+  await setupDB(db, name, stmt);
+  return db;
+}
+
 export async function setupDB(db: SQL, name: string, stmt: string[]) {
   const migrated = await db.begin(async (tx) => {
     await tx`CREATE TABLE IF NOT EXISTS _setup_version (v INT)`;
@@ -67,7 +73,8 @@ export async function insertOrUpdate<T>(
   table: string,
   fields: Record<string, string>,
   primaryKey: string[] | string,
-  data: T
+  data: T,
+  db: SQL = database
 ) {
   if (!Array.isArray(primaryKey)) primaryKey = [primaryKey];
 
@@ -85,7 +92,7 @@ export async function insertOrUpdate<T>(
     .map((k) => `${k} = excluded.${k}`)
     .join(", ");
 
-  await database
+  await db
     .unsafe(
       `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${values}) ` +
         `ON CONFLICT(${primaryKey.join(", ")}) DO UPDATE SET ${excluded}`,
@@ -98,11 +105,12 @@ export async function get<T>(
   table: string,
   fields: Record<string, string>,
   where: string = "1=1",
-  whereArgs: any[] = []
+  whereArgs: any[] = [],
+  db: SQL = database
 ) {
   const keys = Object.keys(fields);
 
-  const rows = await database
+  const rows = await db
     .unsafe(`SELECT ${keys.join(", ")} FROM ${table} WHERE ${where}`, whereArgs)
     .values();
 

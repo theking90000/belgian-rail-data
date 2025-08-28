@@ -1,4 +1,5 @@
 /** IRAIL api Client */
+import * as logs from "./logs";
 
 type Query = { [k: string]: any };
 
@@ -71,6 +72,8 @@ export class RateLimiter {
 const rateLimiter = new RateLimiter(1, 1); /** Allow 1 req/s */
 const API_BASE = "https://api.irail.be/v1";
 
+export let loggerEnabled = true; /** Exported variable to enable logging */
+
 export async function requestApi<T>(
   endpoint: string,
   init?: RequestInit & { query?: Query }
@@ -95,6 +98,8 @@ export async function requestApi<T>(
   }
 
   let data: Response;
+  let start = Bun.nanoseconds();
+
   try {
     data = await fetch(API_BASE + endpoint, {
       ...init,
@@ -108,6 +113,11 @@ export async function requestApi<T>(
   }
 
   release();
+
+  if (loggerEnabled) {
+    let ms = (Bun.nanoseconds() - start) / 1000;
+    await logs.addFetchLog({ endpoint, duration: ms, statusCode: data.status });
+  }
 
   if (data.ok) {
     return (await data.json()) as T;
