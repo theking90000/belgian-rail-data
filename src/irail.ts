@@ -115,7 +115,7 @@ export async function requestApi<T>(
   release();
 
   if (loggerEnabled) {
-    let ms = (Bun.nanoseconds() - start) / 1000;
+    let ms = (Bun.nanoseconds() - start) / 1_000_000;
     await logs.addIrailLog({ endpoint, duration: ms, statusCode: data.status });
   }
 
