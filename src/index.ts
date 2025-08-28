@@ -6,6 +6,23 @@ import * as tools from "./tools";
 
 await config.importConfigFiles();
 
+if (Bun.argv.includes("--help")) {
+  console.log(`
+Usage: ${Bun.argv.slice(0, Bun.argv.indexOf("--help")).join(" ")} [options]
+
+Options:
+  --help           Show this help message
+  --scheduler      Start the scheduler
+  --wake           Wake up the scheduler
+  --server         Start the server
+  --from <station> Departure station (required with --to)
+  --to <station>   Arrival station (required with --from)
+  --date <date>    Date for the connection (optional)
+  --time <time>    Time for the connection (optional)
+`);
+  process.exit(0);
+}
+
 if (Bun.argv.includes("--scheduler")) {
   await scheduler.startScheduler();
 }
