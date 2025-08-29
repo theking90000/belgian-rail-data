@@ -565,3 +565,178 @@ export function connectionsApi(params: {
 }): Promise<ConnectionsResponse> {
   return requestApi("/connections", { query: params });
 }
+
+export type ListConnections = {
+  from: string;
+  to: string;
+  date?: string;
+  time?: string;
+};
+
+export type StationPoint = {
+  station: string;
+  /** hhmm */ time: string;
+  /* ddmmyy */ date: string;
+  platform: string;
+  delay: number;
+};
+
+export type Connection = {
+  from: StationPoint;
+  to: StationPoint;
+  vehicle: string;
+};
+
+export async function listConnections({
+  from,
+  to,
+  date = toDate(new Date()),
+  time = toTime(new Date()),
+}: ListConnections): Promise<Connection[][]> {
+  console.log(
+    ` * Looking from: ${from}, to: ${to} (${formatDisplayDate(
+      date
+    )} ${formatDisplayTime(time)})`
+  );
+
+  const resp = await connectionsApi({ from, to, date, time });
+
+  const connections: Connection[][] = [];
+
+  for (const conn of resp.connection) {
+    let journeys: Connection[] = [];
+
+    let total = 2 + (conn?.vias?.via?.length || 0) * 2;
+    for (let i = 0; i < total; i++) {
+      let journey: {
+        time: number;
+        delay: number;
+        station: string;
+        platform: number;
+        vehicle: string;
+      };
+      if (i === 0) {
+        journey = conn.departure;
+      } else if (i === total - 1) {
+        journey = conn.arrival;
+      } else {
+        let via = conn.vias.via[Math.floor((i - 1) / 2)]!;
+        let j = i % 2 === 0 ? via.departure : via.arrival;
+        journey = { ...j, station: via.station };
+      }
+
+      let point: StationPoint = {
+        time: toTime(journey.time),
+        date: toDate(journey.time),
+        delay: parseDelay(journey.delay),
+        platform: String(journey.platform),
+        station: journey.station,
+      };
+
+      if (i % 2 === 0) {
+        journeys.push({
+          from: point,
+          vehicle: journey.vehicle.replace("BE.NMBS.", ""),
+        } as Connection);
+      } else {
+        journeys[journeys.length - 1]!.to = point;
+      }
+    }
+
+    connections.push(journeys);
+  }
+
+  return connections;
+}
+
+type DateTime = {
+  time: string;
+  date: string;
+};
+
+export function toDateTime(date: string | number | Date): DateTime {
+  date = parseDate(date);
+  return {
+    date: toDate(date),
+    time: toTime(date),
+  };
+}
+
+/**
+ * Compare two DateTime objects.
+ * Returns:
+ *   -1 if a < b
+ *    0 if a == b
+ *    1 if a > b
+ */
+export function compareDateTime(a: DateTime, b: DateTime): number {
+  // Convert ddmmyy to yyyymmdd for comparison
+  const parseDate = (d: string) =>
+    parseInt("20" + d.slice(4, 6) + d.slice(2, 4) + d.slice(0, 2), 10);
+  // Convert hhmm to minutes since midnight
+  const parseTime = (t: string) =>
+    parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(2, 4), 10);
+
+  const dateA = parseDate(a.date);
+  const dateB = parseDate(b.date);
+
+  if (dateA < dateB) return -1;
+  if (dateA > dateB) return 1;
+
+  const timeA = parseTime(a.time);
+  const timeB = parseTime(b.time);
+
+  if (timeA < timeB) return -1;
+  if (timeA > timeB) return 1;
+  return 0;
+}
+
+export async function findAllConnectionsApi({
+  from,
+  to,
+  after,
+  before,
+}: {
+  from: string;
+  to: string;
+  after: DateTime;
+  before: DateTime;
+}): Promise<Connection[][]> {
+  let conns: Connection[][] = [];
+  let current: DateTime = { ...after };
+
+  while (compareDateTime(current, before) === -1) {
+    // console.log(
+    //   ` * connectionsApi ${from}->${to} ${formatDisplayDate(
+    //     current.date
+    //   )} ${formatDisplayTime(current.time)}`
+    // );
+    const connections = await listConnections({
+      from,
+      to,
+      date: current.date,
+      time: current.time,
+    });
+
+    if (connections.length === 0) return conns;
+
+    for (const conn of connections) {
+      let first = conn[0]!.from;
+      let dt: DateTime = {
+        date: first.date,
+        time: first.time,
+      };
+      console.log("dt", dt);
+
+      if (compareDateTime(before, dt) === -1) {
+        return conns;
+      }
+
+      if (!conns.find((t) => t[0]?.vehicle === conn[0]?.vehicle))
+        conns.push(conn);
+      current = dt;
+    }
+  }
+
+  return conns;
+}
