@@ -32,6 +32,20 @@ Bun.serve({
 
       return Response.json(stops);
     },
+    "/station": async (req) => {
+      const search = new URL(req.url).searchParams;
+      let station = search.get("station");
+      let date = search.get("date");
+
+      if (!station)
+        return new Response("Missing station params", { status: 400 });
+
+      if (!date) date = irail.toDate(new Date());
+
+      const stops = await data.getStationStops(station, parseInt(date, 10));
+
+      return Response.json(stops);
+    },
   }),
 });
 

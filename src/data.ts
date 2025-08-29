@@ -225,6 +225,20 @@ export async function setVehicleStop(stop: VehicleStop): Promise<void> {
   );
 }
 
+export async function getStationStops(
+  station: string,
+  date: number
+): Promise<VehicleStop[] | null> {
+  const stops = await get(
+    "vehicle_stops",
+    VehicleStopMapper,
+    "lower(station_name) = lower($1) AND date = $2",
+    [station, date]
+  );
+
+  return stops;
+}
+
 export async function hasVehicleStop(
   vehicle: string,
   date: number
