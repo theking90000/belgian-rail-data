@@ -22,6 +22,21 @@ export async function wake() {
   await run(schedulerState);
 }
 
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function compareDate(date1: Date, date2: Date): number {
+  // Compare only the date part (year, month, day)
+  const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+  const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+  if (d1 < d2) return -1;
+  if (d1 > d2) return 1;
+  return 0;
+}
+
 async function run(state: SchedulerState) {
   console.log(" * running");
 
@@ -29,37 +44,54 @@ async function run(state: SchedulerState) {
   const tVehicles = await config.getTrackedVehicles();
 
   let now = new Date();
-  let date = `${now.getDate().toString().padStart(2, "0")}${(now.getMonth() + 1)
-    .toString()
-    .padStart(2, "0")}${now.getFullYear().toString().slice(-2)}`;
-
-  let yesterdayDate = new Date(now);
-  yesterdayDate.setDate(now.getDate() - 1);
-  let yesterday = `${yesterdayDate.getDate().toString().padStart(2, "0")}${(
-    yesterdayDate.getMonth() + 1
-  )
-    .toString()
-    .padStart(2, "0")}${yesterdayDate.getFullYear().toString().slice(-2)}`;
+  let nowTime = parseInt(irail.toTime(now), 10);
 
   for (const vehicle of tVehicles) {
-    try {
-      // if (!(await data.getVehicleInfo(vehicle))) {
-      //   await fetchVehicle(vehicle, date);
-      // }
+    const info = await data.getVehicleInfo(vehicle);
 
-      if (!(await data.hasVehicleStop(vehicle, parseInt(yesterday, 10)))) {
-        await fetchVehicle(vehicle, yesterday);
+    /** Allow fetching data today, but only after 2hours after the scheduled end ride of train (this allows for delays up to 2h) */
+    let canFetchTodayAfter = info
+      ? parseInt(irail.addMinutesToTime(info?.end.at, 2 * 60), 10)
+      : null;
+
+    let currentDay = addDays(now, -2);
+
+    while (
+      compareDate(currentDay, now) === -1 ||
+      (compareDate(currentDay, now) === 0 &&
+        canFetchTodayAfter &&
+        nowTime > canFetchTodayAfter)
+    ) {
+      // console.log(
+      //   ` * Check ${vehicle} at ${irail.formatDisplayDate(
+      //     irail.toDate(currentDay)
+      //   )}`
+      // );
+      try {
+        if (
+          !(await data.hasVehicleStop(
+            vehicle,
+            parseInt(irail.toDate(currentDay), 10)
+          ))
+        ) {
+          await fetchVehicle(vehicle, irail.toDate(currentDay));
+        }
+      } catch (e) {
+        console.error(e);
       }
 
-      // Check if we have fetch data for yesterday
-    } catch (e) {
-      console.error(e);
+      currentDay = addDays(currentDay, 1);
     }
   }
 }
 
 async function fetchVehicle(vehicle: string, date: string) {
-  console.log(" * fetching vehicle", vehicle, "at", date);
+  console.log(
+    " * fetching vehicle",
+    vehicle,
+    "at",
+    irail.formatDisplayDate(date)
+  );
 
   const info = await irail.vehicleApi({ id: vehicle, date });
 

@@ -202,6 +202,29 @@ export function duration(
   );
 }
 
+/** Add minutes to a time string (hhmm), returns hhmm */
+export function addMinutesToTime(
+  time: string | number,
+  minutesToAdd: number
+): string {
+  let hours =
+    typeof time === "string"
+      ? parseInt(time.slice(0, 2), 10)
+      : Math.floor(time / 100);
+  let minutes =
+    typeof time === "string" ? parseInt(time.slice(2), 10) : time % 100;
+
+  let totalMinutes = hours * 60 + minutes + minutesToAdd;
+  if (totalMinutes < 0) totalMinutes += 24 * 60; // handle negative wrap
+
+  hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  minutes = totalMinutes % 60;
+
+  return (
+    hours.toString().padStart(2, "0") + minutes.toString().padStart(2, "0")
+  );
+}
+
 export async function compositionApi(params: {
   id: string;
   date: string;
