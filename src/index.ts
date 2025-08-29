@@ -6,32 +6,20 @@ import * as tools from "./tools";
 
 await config.importConfigFiles();
 
-if (Bun.argv.includes("--help")) {
-  console.log(`
-Usage: ${Bun.argv.slice(0, Bun.argv.indexOf("--help")).join(" ")} [options]
-
-Options:
-  --help           Show this help message
-  --scheduler      Start the scheduler
-  --wake           Wake up the scheduler
-  --server         Start the server
-  --from <station> Departure station (required with --to)
-  --to <station>   Arrival station (required with --from)
-  --date <date>    Date for the connection (optional)
-  --time <time>    Time for the connection (optional)
-`);
-  process.exit(0);
-}
+let showHelp = true;
 
 if (Bun.argv.includes("--scheduler")) {
+  showHelp = false;
   await scheduler.startScheduler();
 }
 
 if (Bun.argv.includes("--wake")) {
+  showHelp = false;
   await scheduler.wake();
 }
 
 if (Bun.argv.includes("--server")) {
+  showHelp = false;
   await import("./server");
 }
 
@@ -57,4 +45,22 @@ if (Bun.argv.includes("--from") && Bun.argv.includes("--to")) {
   const time = getArg("--time");
 
   await tools.listConnectionsPrint({ from, to, date, time });
+  showHelp = false;
+}
+
+if (showHelp || Bun.argv.includes("--help")) {
+  console.log(`
+Usage: ${Bun.argv.slice(0, Bun.argv.indexOf("--help")).join(" ")} [options]
+
+Options:
+  --help           Show this help message
+  --scheduler      Start the scheduler
+  --wake           Wake up the scheduler (to use via external cronjob scheduling)
+  --server         Start the Web API server
+  --from <station> Departure station (required with --to)
+  --to <station>   Arrival station (required with --from)
+  --date <date>    Date for the connection (optional)
+  --time <time>    Time for the connection (optional)
+`);
+  process.exit(0);
 }
