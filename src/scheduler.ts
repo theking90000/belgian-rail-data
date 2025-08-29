@@ -67,17 +67,21 @@ async function run(state: SchedulerState) {
       //     irail.toDate(currentDay)
       //   )}`
       // );
+      const date = irail.toDate(currentDay);
+      const dateN = parseInt(date, 10);
+
       try {
         if (
-          !(await data.hasVehicleStop(
-            vehicle,
-            parseInt(irail.toDate(currentDay), 10)
-          ))
+          !(
+            (await data.hasVehicleError(vehicle, dateN)) ||
+            (await data.hasVehicleStop(vehicle, dateN))
+          )
         ) {
-          await fetchVehicle(vehicle, irail.toDate(currentDay));
+          await fetchVehicle(vehicle, date);
         }
       } catch (e) {
         console.error(e);
+        await data.setVehicleError(vehicle, dateN);
       }
 
       currentDay = addDays(currentDay, 1);

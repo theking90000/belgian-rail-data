@@ -44,6 +44,7 @@ setupDB(database, "data.sql", [
   "CREATE TABLE vehicle (id VARCHAR(30) PRIMARY KEY, vehicle_start INT, vehicle_end INT, station_start TEXT, station_end TEXT, stop_count INT);",
   "CREATE TABLE vehicle_stops (vehicle_id VARCHAR(30), date INT, stop_index INT, station_name TEXT, platform VARCHAR(10), scheduled_arrival_time INT, scheduled_departure_time INT, delay INT, departure_delay INT, departure_canceled BOOLEAN, arrival_delay INT, arrival_canceled BOOLEAN, occupancy VARCHAR(20), PRIMARY KEY (vehicle_id, date, stop_index));",
   "CREATE TABLE vehicle_composition (vehicle_id VARCHAR(30), date INT, material VARCHAR(30), units INT, m_detailed TEXT, PRIMARY KEY (vehicle_id, date))",
+  "CREATE TABLE vehicle_error (vehicle_id VARCHAR(30), date INT, fetch_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (vehicle_id, date));",
 ]);
 
 function getProperty<T extends any = any>(obj: T, prop: string | string[]) {
@@ -287,4 +288,18 @@ export async function setVehicleComposition(
     ["vehicle_id", "date"],
     composition
   );
+}
+
+export async function hasVehicleError(vehicleId: string, date: number) {
+  const result =
+    await database`SELECT 1 FROM vehicle_error WHERE vehicle_id = ${vehicleId} AND date = ${date} LIMIT 1`;
+
+  return result.length > 0;
+}
+
+export async function setVehicleError(vehicleId: string, date: number) {
+  const result =
+    await database`INSERT INTO  vehicle_error (vehicle_id, date) VALUES (${vehicleId}, ${date})`;
+
+  return result.length > 0;
 }
