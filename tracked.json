@@ -1,5 +1,10 @@
 {
   "vehicles": ["IC1832", "IC19914", "IC3827", "IC3817", "IC3406"],
 
-  "api_keys": ["test123"]
+  "api_keys": ["test123"],
+
+  "connections": [
+    ["La Louvière-Sud", "Mons"],
+    ["Mons", "La Louvière-Sud"]
+  ]
 }

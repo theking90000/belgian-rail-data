@@ -5,6 +5,7 @@ export const config = new Bun.SQL("sqlite://config.db");
 await setupDB(config, "config.db", [
   "CREATE TABLE tracked_vehicle (id VARCHAR(30) PRIMARY KEY);",
   "CREATE TABLE api_keys (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, key VARCHAR(50) UNIQUE);",
+  'CREATE TABLE tracked_connections ("from" TEXT, "to" TEXT, PRIMARY KEY ("from", "to"))',
 ]);
 
 export async function importConfigFiles() {
@@ -12,15 +13,20 @@ export async function importConfigFiles() {
   }
   console.log(" * syncing config from tracked.json");
   try {
-    const data: { vehicles?: string[]; api_keys?: string[] } = await Bun.file(
-      "tracked.json"
-    ).json();
+    const data: {
+      vehicles?: string[];
+      api_keys?: string[];
+      connections?: [string, string][];
+    } = await Bun.file("tracked.json").json();
     await config.transaction(async (tx) => {
       for (const id of data?.vehicles || []) {
         await tx`INSERT OR IGNORE INTO tracked_vehicle (id) VALUES (${id})`;
       }
       for (const api_key of data?.api_keys || []) {
         await tx`INSERT OR IGNORE INTO api_keys (key) VALUES (${api_key})`;
+      }
+      for (const [from, to] of data?.connections || []) {
+        await tx`INSERT OR IGNORE INTO tracked_connections ("from", "to") VALUES (${from},${to})`;
       }
     });
   } catch (err) {
@@ -38,4 +44,11 @@ export async function getApiKey(key: string): Promise<number | null> {
   return await config`SELECT id FROM api_keys WHERE key = ${key}`
     .values()
     .then((r) => (r.length > 0 ? r[0][0] : null));
+}
+
+export async function getTrackedConnections(): Promise<[string, string][]> {
+  return (await config`SELECT "from", "to" FROM tracked_connections`.values()) as [
+    string,
+    string
+  ][];
 }

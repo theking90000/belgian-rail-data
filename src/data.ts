@@ -45,6 +45,8 @@ setupDB(database, "data.sql", [
   "CREATE TABLE vehicle_stops (vehicle_id VARCHAR(30), date INT, stop_index INT, station_name TEXT, platform VARCHAR(10), scheduled_arrival_time INT, scheduled_departure_time INT, delay INT, departure_delay INT, departure_canceled BOOLEAN, arrival_delay INT, arrival_canceled BOOLEAN, occupancy VARCHAR(20), PRIMARY KEY (vehicle_id, date, stop_index));",
   "CREATE TABLE vehicle_composition (vehicle_id VARCHAR(30), date INT, material VARCHAR(30), units INT, m_detailed TEXT, PRIMARY KEY (vehicle_id, date))",
   "CREATE TABLE vehicle_error (vehicle_id VARCHAR(30), date INT, fetch_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (vehicle_id, date));",
+  'CREATE TABLE connections ("from" TEXT, "to" TEXT, date TEXT, vehicles TEXT, time TEXT, PRIMARY KEY("from", "to", date, vehicles))',
+  'CREATE TABLE connections_fetch ("from" TEXT, "to" TEXT, date TEXT, PRIMARY KEY("from", "to", date))',
 ]);
 
 function getProperty<T extends any = any>(obj: T, prop: string | string[]) {
@@ -90,13 +92,20 @@ export async function insertOrUpdate<T>(
 
   const excluded = keys
     .filter((k) => !primaryKey.includes(k))
+    .map((k) => '"' + k + '"')
     .map((k) => `${k} = excluded.${k}`)
     .join(", ");
 
   await db
     .unsafe(
-      `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${values}) ` +
-        `ON CONFLICT(${primaryKey.join(", ")}) DO UPDATE SET ${excluded}`,
+      `INSERT INTO ${table} (${keys
+        .map((k) => '"' + k + '"')
+        .join(", ")}) VALUES (${values}) ` +
+        (primaryKey.length > 0
+          ? `ON CONFLICT(${primaryKey
+              .map((k) => '"' + k + '"')
+              .join(", ")}) DO UPDATE SET ${excluded}`
+          : ""),
       valuesBind
     )
     .execute();
@@ -112,7 +121,12 @@ export async function get<T>(
   const keys = Object.keys(fields);
 
   const rows = await db
-    .unsafe(`SELECT ${keys.join(", ")} FROM ${table} WHERE ${where}`, whereArgs)
+    .unsafe(
+      `SELECT ${keys
+        .map((k) => '"' + k + '"')
+        .join(", ")} FROM ${table} WHERE ${where}`,
+      whereArgs
+    )
     .values();
 
   return await rows.map((row: any[]) => {
@@ -302,4 +316,78 @@ export async function setVehicleError(vehicleId: string, date: number) {
     await database`INSERT INTO  vehicle_error (vehicle_id, date) VALUES (${vehicleId}, ${date})`;
 
   return result.length > 0;
+}
+
+type Connection = {
+  from: string;
+  to: string;
+  date: string;
+  time: string;
+  vehicles: string;
+};
+
+const ConnectionMapper = {
+  from: "from",
+  to: "to",
+  date: "date",
+  time: "time",
+  vehicles: "vehicles",
+};
+
+export async function setConnection(connection: Connection): Promise<void> {
+  await insertOrUpdate(
+    "connections",
+    ConnectionMapper,
+    ["from", "to", "date", "vehicles"],
+    connection
+  );
+}
+
+export async function getLastConnection({
+  from,
+  to,
+  date,
+}: {
+  from: string;
+  to: string;
+  date: string;
+}): Promise<Connection | null> {
+  return get(
+    "connections",
+    ConnectionMapper,
+    '"from" = $1 AND "to" = $2 AND date = $3 ORDER BY time DESC LIMIT 1',
+    [from, to, date]
+  ).then((r) => (r.length === 0 ? null : r[0]));
+}
+
+type ConnectionFetch = {
+  from: string;
+  to: string;
+  date: string;
+};
+
+const ConnectionFetchMapper = {
+  from: "from",
+  to: "to",
+  date: "date",
+};
+
+export async function setConnectionFetch(
+  fetch: ConnectionFetch
+): Promise<void> {
+  await insertOrUpdate("connections_fetch", ConnectionFetchMapper, [], fetch);
+}
+
+export async function getConnectionFetch(
+  from: string,
+  to: string,
+  date: string
+): Promise<ConnectionFetch | null> {
+  const result = await get(
+    "connections_fetch",
+    ConnectionFetchMapper,
+    '"from" = $1 AND "to" = $2 AND date = $3',
+    [from, to, date]
+  );
+  return result.length === 0 ? null : result[0];
 }

@@ -706,11 +706,6 @@ export async function findAllConnectionsApi({
   let current: DateTime = { ...after };
 
   while (compareDateTime(current, before) === -1) {
-    // console.log(
-    //   ` * connectionsApi ${from}->${to} ${formatDisplayDate(
-    //     current.date
-    //   )} ${formatDisplayTime(current.time)}`
-    // );
     const connections = await listConnections({
       from,
       to,
@@ -726,14 +721,20 @@ export async function findAllConnectionsApi({
         date: first.date,
         time: first.time,
       };
-      console.log("dt", dt);
 
       if (compareDateTime(before, dt) === -1) {
         return conns;
       }
 
-      if (!conns.find((t) => t[0]?.vehicle === conn[0]?.vehicle))
+      if (
+        !conns.find(
+          (c) =>
+            c.length === conn.length &&
+            c.every((x, i) => x.vehicle === conn[i]!.vehicle)
+        )
+      ) {
         conns.push(conn);
+      }
       current = dt;
     }
   }

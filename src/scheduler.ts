@@ -40,9 +40,16 @@ function compareDate(date1: Date, date2: Date): number {
 async function run(state: SchedulerState) {
   console.log(" * running");
 
+  const tConnections = await config.getTrackedConnections();
+  await trackedConnections(tConnections);
+
   // Check if new tracked vehicle
   const tVehicles = await config.getTrackedVehicles();
 
+  await trackedVehicles(tVehicles);
+}
+
+async function trackedVehicles(tVehicles: string[]) {
   let now = new Date();
   let nowTime = parseInt(irail.toTime(now), 10);
 
@@ -171,4 +178,42 @@ async function fetchVehicle(vehicle: string, date: string) {
     material: modeMaterial || "unknown",
     detailed: JSON.stringify(composition.composition.segments),
   });
+}
+
+async function trackedConnections(tConnections: [string, string][]) {
+  let date = irail.toDate(new Date());
+  for (const [from, to] of tConnections) {
+    if (!(await data.getConnectionFetch(from, to, date))) {
+      await fetchTrackedConnections(from, to, date);
+    }
+  }
+}
+
+async function fetchTrackedConnections(from: string, to: string, date: string) {
+  const lastConnection = await data.getLastConnection({ from, to, date });
+  let after: string;
+  if (!lastConnection) {
+    after = "0000";
+  } else {
+    after = lastConnection.time;
+  }
+  let before = /** end of day? */ "2359";
+  const connections = await irail.findAllConnectionsApi({
+    from,
+    to,
+    after: { date, time: after },
+    before: { date, time: before },
+  });
+
+  for (const connection of connections) {
+    await data.setConnection({
+      from: connection[0]!.from.station,
+      to: connection[connection.length - 1]!.to.station,
+      date: connection[0]!.from.date,
+      time: connection[0]!.from.time,
+      vehicles: connection.map((c) => c.vehicle).join(","),
+    });
+  }
+
+  await data.setConnectionFetch({ from, to, date });
 }
