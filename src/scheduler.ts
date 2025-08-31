@@ -41,7 +41,7 @@ async function run(state: SchedulerState) {
   console.log(" * running");
 
   const tConnections = await config.getTrackedConnections();
-  await trackedConnections(tConnections);
+  const tfVehicles = await trackedConnections(tConnections);
 
   // Check if new tracked vehicle
   const tVehicles = await config.getTrackedVehicles();
@@ -75,24 +75,28 @@ async function trackedVehicles(tVehicles: string[]) {
       //   )}`
       // );
       const date = irail.toDate(currentDay);
-      const dateN = parseInt(date, 10);
 
-      try {
-        if (
-          !(
-            (await data.hasVehicleError(vehicle, dateN)) ||
-            (await data.hasVehicleStop(vehicle, dateN))
-          )
-        ) {
-          await fetchVehicle(vehicle, date);
-        }
-      } catch (e) {
-        console.error(e);
-        await data.setVehicleError(vehicle, dateN);
-      }
+      await fetchVehicleHandleError(vehicle, date);
 
       currentDay = addDays(currentDay, 1);
     }
+  }
+}
+
+async function fetchVehicleHandleError(vehicle: string, date: string) {
+  let dateN = parseInt(date, 10);
+  try {
+    if (
+      !(
+        (await data.hasVehicleError(vehicle, dateN)) ||
+        (await data.hasVehicleStop(vehicle, dateN))
+      )
+    ) {
+      await fetchVehicle(vehicle, date);
+    }
+  } catch (e) {
+    console.error(e);
+    await data.setVehicleError(vehicle, dateN);
   }
 }
 
@@ -181,10 +185,19 @@ async function fetchVehicle(vehicle: string, date: string) {
 }
 
 async function trackedConnections(tConnections: [string, string][]) {
-  let date = irail.toDate(new Date());
+  let now = new Date();
+
   for (const [from, to] of tConnections) {
-    if (!(await data.getConnectionFetch(from, to, date))) {
-      await fetchTrackedConnections(from, to, date);
+    let currentDay = addDays(now, -2);
+    while (compareDate(currentDay, now) === -1) {
+      let date = irail.toDate(currentDay);
+
+      if (!(await data.getConnectionFetch(from, to, date))) {
+        await fetchTrackedConnections(from, to, date);
+        await data.setConnectionFetch({ from, to, date });
+      }
+
+      currentDay = addDays(currentDay, 1);
     }
   }
 }
@@ -198,14 +211,14 @@ async function fetchTrackedConnections(from: string, to: string, date: string) {
     after = lastConnection.time;
   }
   let before = /** end of day? */ "2359";
-  const connections = await irail.findAllConnectionsApi({
+  const connections = irail.findAllConnectionsIterApi({
     from,
     to,
     after: { date, time: after },
     before: { date, time: before },
   });
 
-  for (const connection of connections) {
+  for await (const connection of connections) {
     await data.setConnection({
       from: connection[0]!.from.station,
       to: connection[connection.length - 1]!.to.station,
@@ -213,7 +226,9 @@ async function fetchTrackedConnections(from: string, to: string, date: string) {
       time: connection[0]!.from.time,
       vehicles: connection.map((c) => c.vehicle).join(","),
     });
-  }
 
-  await data.setConnectionFetch({ from, to, date });
+    for (const via of connection) {
+      await fetchVehicleHandleError(via.vehicle, via.from.date);
+    }
+  }
 }

@@ -691,6 +691,51 @@ export function compareDateTime(a: DateTime, b: DateTime): number {
   return 0;
 }
 
+export async function* findAllConnectionsIterApi({
+  from,
+  to,
+  after,
+  before,
+}: {
+  from: string;
+  to: string;
+  after: DateTime;
+  before: DateTime;
+}): AsyncGenerator<Connection[], void, unknown> {
+  let seen = new Set<string>();
+  let current: DateTime = { ...after };
+
+  while (compareDateTime(current, before) === -1) {
+    const connections = await listConnections({
+      from,
+      to,
+      date: current.date,
+      time: current.time,
+    });
+
+    if (connections.length === 0) return;
+
+    for (const conn of connections) {
+      let first = conn[0]!.from;
+      let dt: DateTime = {
+        date: first.date,
+        time: first.time,
+      };
+
+      if (compareDateTime(before, dt) === -1) {
+        return;
+      }
+
+      const key = conn.map((x) => x.vehicle).join("|");
+      if (!seen.has(key)) {
+        seen.add(key);
+        yield conn;
+      }
+      current = dt;
+    }
+  }
+}
+
 export async function findAllConnectionsApi({
   from,
   to,
@@ -702,42 +747,14 @@ export async function findAllConnectionsApi({
   after: DateTime;
   before: DateTime;
 }): Promise<Connection[][]> {
-  let conns: Connection[][] = [];
-  let current: DateTime = { ...after };
-
-  while (compareDateTime(current, before) === -1) {
-    const connections = await listConnections({
-      from,
-      to,
-      date: current.date,
-      time: current.time,
-    });
-
-    if (connections.length === 0) return conns;
-
-    for (const conn of connections) {
-      let first = conn[0]!.from;
-      let dt: DateTime = {
-        date: first.date,
-        time: first.time,
-      };
-
-      if (compareDateTime(before, dt) === -1) {
-        return conns;
-      }
-
-      if (
-        !conns.find(
-          (c) =>
-            c.length === conn.length &&
-            c.every((x, i) => x.vehicle === conn[i]!.vehicle)
-        )
-      ) {
-        conns.push(conn);
-      }
-      current = dt;
-    }
+  const result: Connection[][] = [];
+  for await (const conn of findAllConnectionsIterApi({
+    from,
+    to,
+    after,
+    before,
+  })) {
+    result.push(conn);
   }
-
-  return conns;
+  return result;
 }
