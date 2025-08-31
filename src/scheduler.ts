@@ -184,16 +184,22 @@ async function fetchVehicle(vehicle: string, date: string) {
   });
 }
 
-async function trackedConnections(tConnections: [string, string][]) {
+async function trackedConnections(tConnections: config.TrackedConnection[]) {
   let now = new Date();
 
-  for (const [from, to] of tConnections) {
+  for (const [from, to, { fetchVehicleFilter, timeRanges }] of tConnections) {
     let currentDay = addDays(now, -2);
     while (compareDate(currentDay, now) === -1) {
       let date = irail.toDate(currentDay);
 
       if (!(await data.getConnectionFetch(from, to, date))) {
-        await fetchTrackedConnections(from, to, date);
+        await fetchTrackedConnections(
+          from,
+          to,
+          date,
+          fetchVehicleFilter,
+          timeRanges
+        );
         await data.setConnectionFetch({ from, to, date });
       }
 
@@ -202,9 +208,22 @@ async function trackedConnections(tConnections: [string, string][]) {
   }
 }
 
-async function fetchTrackedConnections(from: string, to: string, date: string) {
+async function fetchTrackedConnections(
+  from: string,
+  to: string,
+  date: string,
+  fetchVehicleFilter: string[],
+  timeRanges: [string, string][]
+) {
+  let inTimeRange = (t: string) =>
+    timeRanges.some(
+      ([t1, t2]) =>
+        irail.compareTime(t, t1) === 1 && irail.compareTime(t, t2) === -1
+    );
+
   const lastConnection = await data.getLastConnection({ from, to, date });
   let after: string;
+
   if (!lastConnection) {
     after = "0000";
   } else {
@@ -228,7 +247,13 @@ async function fetchTrackedConnections(from: string, to: string, date: string) {
     });
 
     for (const via of connection) {
-      await fetchVehicleHandleError(via.vehicle, via.from.date);
+      if (
+        (fetchVehicleFilter.length === 0 ||
+          fetchVehicleFilter.some((x) => via.vehicle.startsWith(x))) &&
+        inTimeRange(via.from.time)
+      ) {
+        await fetchVehicleHandleError(via.vehicle, via.from.date);
+      }
     }
   }
 }

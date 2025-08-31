@@ -691,6 +691,25 @@ export function compareDateTime(a: DateTime, b: DateTime): number {
   return 0;
 }
 
+/**
+ * Compare two time strings in "hhmm" format.
+ * Returns:
+ *   -1 if a < b
+ *    0 if a == b
+ *    1 if a > b
+ */
+export function compareTime(a: string, b: string): number {
+  const toMinutes = (t: string) =>
+    parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(2, 4), 10);
+
+  const minA = toMinutes(a);
+  const minB = toMinutes(b);
+
+  if (minA < minB) return -1;
+  if (minA > minB) return 1;
+  return 0;
+}
+
 export async function* findAllConnectionsIterApi({
   from,
   to,

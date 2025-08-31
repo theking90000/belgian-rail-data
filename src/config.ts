@@ -6,6 +6,8 @@ await setupDB(config, "config.db", [
   "CREATE TABLE tracked_vehicle (id VARCHAR(30) PRIMARY KEY);",
   "CREATE TABLE api_keys (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, key VARCHAR(50) UNIQUE);",
   'CREATE TABLE tracked_connections ("from" TEXT, "to" TEXT, PRIMARY KEY ("from", "to"))',
+  "ALTER TABLE tracked_connections ADD COLUMN fetch_vehicle_filter TEXT;",
+  "ALTER TABLE tracked_connections ADD COLUMN fetch_time_range TEXT;",
 ]);
 
 export async function importConfigFiles() {
@@ -16,7 +18,11 @@ export async function importConfigFiles() {
     const data: {
       vehicles?: string[];
       api_keys?: string[];
-      connections?: [string, string][];
+      connections?: [
+        string,
+        string,
+        { fetch_vehicles: string[]; time_ranges: [string, string][] }?
+      ][];
     } = await Bun.file("tracked.json").json();
     await config.transaction(async (tx) => {
       for (const id of data?.vehicles || []) {
@@ -25,8 +31,17 @@ export async function importConfigFiles() {
       for (const api_key of data?.api_keys || []) {
         await tx`INSERT OR IGNORE INTO api_keys (key) VALUES (${api_key})`;
       }
-      for (const [from, to] of data?.connections || []) {
-        await tx`INSERT OR IGNORE INTO tracked_connections ("from", "to") VALUES (${from},${to})`;
+      for (const conn of data?.connections || []) {
+        if (conn.length == 2) {
+          await tx`INSERT OR IGNORE INTO tracked_connections ("from", "to") VALUES (${conn[0]},${conn[1]})`;
+        } else if (conn.length === 3) {
+          let fetchVehicleFilter = conn[2]!.fetch_vehicles.join(",");
+          let timeRanges = conn[2]!.time_ranges
+            .map((x) => x.join("-"))
+            .join(",");
+
+          await tx`INSERT OR IGNORE INTO tracked_connections ("from", "to", fetch_vehicle_filter, fetch_time_range) VALUES (${conn[0]}, ${conn[1]}, ${fetchVehicleFilter}, ${timeRanges})`;
+        }
       }
     });
   } catch (err) {
@@ -46,9 +61,32 @@ export async function getApiKey(key: string): Promise<number | null> {
     .then((r) => (r.length > 0 ? r[0][0] : null));
 }
 
-export async function getTrackedConnections(): Promise<[string, string][]> {
-  return (await config`SELECT "from", "to" FROM tracked_connections`.values()) as [
-    string,
-    string
-  ][];
+export type TrackedConnection = [
+  string,
+  string,
+  { fetchVehicleFilter: string[]; timeRanges: [string, string][] }
+];
+
+export async function getTrackedConnections(): Promise<TrackedConnection[]> {
+  let data =
+    (await config`SELECT "from", "to", fetch_vehicle_filter, fetch_time_range FROM tracked_connections`.values()) as [
+      string,
+      string,
+      string?,
+      string?
+    ][];
+
+  return data.map(
+    ([from, to, fetchVehicleFilter, timeRanges]) =>
+      [
+        from,
+        to,
+        {
+          fetchVehicleFilter: fetchVehicleFilter?.split(",") || [],
+          timeRanges: timeRanges
+            ?.split(",")
+            .map((d) => d.split("-") as [string, string]) || [["0000", "2359"]],
+        },
+      ] as const
+  );
 }

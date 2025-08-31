@@ -4,7 +4,15 @@
   "api_keys": ["test123"],
 
   "connections": [
-    ["La Louvière-Sud", "Mons"],
-    ["Mons", "La Louvière-Sud"]
+    [
+      "La Louvière-Sud",
+      "Mons",
+      { "fetch_vehicles": ["IC", "L"], "time_ranges": [["0700", "0800"]] }
+    ],
+    [
+      "Mons",
+      "La Louvière-Sud",
+      { "fetch_vehicles": ["IC", "L"], "time_ranges": [["1500", "1800"]] }
+    ]
   ]
 }
