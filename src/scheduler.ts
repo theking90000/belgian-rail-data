@@ -41,7 +41,6 @@ async function run(state: SchedulerState) {
   console.log(" * running");
 
   const tConnections = await config.getTrackedConnections();
-  console.log(tConnections);
   await trackedConnections(tConnections);
 
   // Check if new tracked vehicle
