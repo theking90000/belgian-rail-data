@@ -138,7 +138,7 @@ PORT_EOF
 log "Setting up cron job for wake command..."
 sudo tee /etc/cron.d/sncb-insights > /dev/null << 'CRON_EOF'
 # SNCB Insights wake command - runs every hour
-0 * * * * sncb /opt/sncb/sncb-insights --wake >/dev/null 2>&1
+0 * * * * sncb cd /opt/sncb && /opt/sncb/sncb-insights --wake >/dev/null 2>&1
 CRON_EOF
 
 sudo chmod 644 /etc/cron.d/sncb-insights
