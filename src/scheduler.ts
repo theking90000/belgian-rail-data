@@ -41,7 +41,8 @@ async function run(state: SchedulerState) {
   console.log(" * running");
 
   const tConnections = await config.getTrackedConnections();
-  const tfVehicles = await trackedConnections(tConnections);
+  console.log(tConnections);
+  await trackedConnections(tConnections);
 
   // Check if new tracked vehicle
   const tVehicles = await config.getTrackedVehicles();
@@ -187,7 +188,7 @@ async function fetchVehicle(vehicle: string, date: string) {
 async function trackedConnections(tConnections: config.TrackedConnection[]) {
   let now = new Date();
 
-  for (const [from, to, { fetchVehicleFilter, timeRanges }] of tConnections) {
+  for (const [from, to, meta] of tConnections) {
     let currentDay = addDays(now, -2);
     while (compareDate(currentDay, now) === -1) {
       let date = irail.toDate(currentDay);
@@ -197,8 +198,8 @@ async function trackedConnections(tConnections: config.TrackedConnection[]) {
           from,
           to,
           date,
-          fetchVehicleFilter,
-          timeRanges
+          meta?.fetchVehicleFilter,
+          meta?.timeRanges
         );
         await data.setConnectionFetch({ from, to, date });
       }
@@ -212,10 +213,11 @@ async function fetchTrackedConnections(
   from: string,
   to: string,
   date: string,
-  fetchVehicleFilter: string[],
-  timeRanges: [string, string][]
+  fetchVehicleFilter?: string[],
+  timeRanges?: [string, string][]
 ) {
   let inTimeRange = (t: string) =>
+    timeRanges &&
     timeRanges.some(
       ([t1, t2]) =>
         irail.compareTime(t, t1) === 1 && irail.compareTime(t, t2) === -1
@@ -248,6 +250,8 @@ async function fetchTrackedConnections(
 
     for (const via of connection) {
       if (
+        fetchVehicleFilter &&
+        timeRanges &&
         (fetchVehicleFilter.length === 0 ||
           fetchVehicleFilter.some((x) => via.vehicle.startsWith(x))) &&
         inTimeRange(via.from.time)

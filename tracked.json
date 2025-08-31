@@ -9,10 +9,6 @@
       "Mons",
       { "fetch_vehicles": ["IC", "L"], "time_ranges": [["0700", "0800"]] }
     ],
-    [
-      "Mons",
-      "La Louvière-Sud",
-      { "fetch_vehicles": ["IC", "L"], "time_ranges": [["1500", "1800"]] }
-    ]
+    ["Mons", "La Louvière-Sud"]
   ]
 }
