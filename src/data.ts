@@ -299,10 +299,10 @@ export function getStationStops(
   return csvOrRow<VehicleStop[]>(
     "vehicle_stops",
     VehicleStopMapper,
-    `lower(station_name) = lower($1) AND date IN (${dates
+    `station_name LIKE $1 ESCAPE '\\' AND date IN (${dates
       .map((_, i) => `$${i + 2}`)
       .join(", ")})`,
-    [station, ...dates]
+    [`%${station.replace(/([%_\\])/g, "\\$1")}%`, ...dates]
   );
 }
 
