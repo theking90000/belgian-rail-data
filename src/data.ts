@@ -331,18 +331,20 @@ const VehicleCompositionMapper = {
   m_detailed: "detailed",
 };
 
-export async function getVehicleComposition(
+export function getVehicleComposition(
   vehicleId: string,
-  date: number
-): Promise<VehicleComposition | null> {
-  const result = await get(
+  date: string,
+  before?: string
+) {
+  let dates = dateRange(date, before || date);
+  return csvOrRow<VehicleComposition>(
     "vehicle_composition",
     VehicleCompositionMapper,
-    "vehicle_id = $1 AND date = $2",
-    [vehicleId, date]
+    `vehicle_id = $1 AND date IN (${dates
+      .map((_, i) => `$${i + 2}`)
+      .join(", ")})`,
+    [vehicleId, ...dates]
   );
-  if (result.length === 0) return null;
-  return result[0];
 }
 
 export async function setVehicleComposition(
@@ -467,7 +469,16 @@ export function toCSV<T>(
     yield (withMapping ? Object.values(fields) : keys).join(",") + "\n";
 
     for (const row of await rows) {
-      yield keys.map((k) => row[k]).join(",") + "\n";
+      // Helper to encode a value for CSV (handles quotes, commas, newlines)
+      function encodeCSVValue(value: any): string {
+        if (value == null) return "";
+        const str = String(value);
+        if (/[",\n\r]/.test(str)) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }
+      yield keys.map((k) => encodeCSVValue(row[k])).join(",") + "\n";
     }
   }
 
@@ -477,7 +488,6 @@ export function toCSV<T>(
     return new Response(readable, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${table}.csv"`,
       },
     });
   };

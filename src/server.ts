@@ -57,10 +57,15 @@ Bun.serve({
       if (id.endsWith(".csv")) {
         id = id.slice(0, -4);
         // Check if id is vehicle
+        let isComp = id.endsWith("-comp");
+        id = id.slice(0, isComp ? -5 : undefined);
         const info = await data.getVehicleInfo(id);
         if (info) {
-          return data
-            .getVehicleStopsDated(id, after, before)
+          return (
+            isComp
+              ? data.getVehicleComposition(id, after, before)
+              : data.getVehicleStopsDated(id, after, before)
+          )
             .csv(false)
             .toResponse();
         }
