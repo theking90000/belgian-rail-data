@@ -1,4 +1,5 @@
 import { sql, SQL } from "bun";
+import { Readable } from "stream";
 
 export const database = new SQL("sqlite://data.db");
 
@@ -231,6 +232,55 @@ export async function getVehicleStops(
   return stops;
 }
 
+export function toJSDate(date: string): Date {
+  if (date.length !== 6) throw new Error("Invalid ddmmyy date format");
+  const day = parseInt(date.slice(0, 2), 10);
+  const month = parseInt(date.slice(2, 4), 10) - 1;
+  const year = 2000 + parseInt(date.slice(4, 6), 10);
+  return new Date(year, month, day);
+}
+
+export function dateRange(afterDate: string, beforeDate: string) {
+  // Generate all dates between afterDate and beforeDate (inclusive)
+  const start = toJSDate(afterDate);
+  const end = toJSDate(beforeDate);
+  const dates: number[] = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const y = d.getFullYear().toString().slice(2);
+    const m = (d.getMonth() + 1).toString().padStart(2, "0");
+    const dd = d.getDate().toString().padStart(2, "0");
+    dates.push(Number(`${dd}${m}${y}`));
+  }
+  return dates;
+}
+
+function csvOrRow<T>(...params: Parameters<typeof get<T>>) {
+  return {
+    get(): ReturnType<typeof get<T>> {
+      return get(...params);
+    },
+    csv(withMapping?: boolean): ReturnType<typeof toCSV<T>> {
+      return toCSV(withMapping, ...params);
+    },
+  };
+}
+
+export function getVehicleStopsDated(
+  vehicleId: string,
+  afterDate: string,
+  beforeDate: string
+) {
+  let dates = dateRange(afterDate, beforeDate);
+  return csvOrRow<VehicleStop>(
+    "vehicle_stops",
+    VehicleStopMapper,
+    `vehicle_id = $1 AND date IN (${dates
+      .map((_, i) => `$${i + 2}`)
+      .join(", ")}) ORDER BY date, stop_index`,
+    [vehicleId, ...dates]
+  );
+}
+
 export async function setVehicleStop(stop: VehicleStop): Promise<void> {
   await insertOrUpdate(
     "vehicle_stops",
@@ -240,18 +290,20 @@ export async function setVehicleStop(stop: VehicleStop): Promise<void> {
   );
 }
 
-export async function getStationStops(
+export function getStationStops(
   station: string,
-  date: number
-): Promise<VehicleStop[] | null> {
-  const stops = await get(
+  date: string,
+  before?: string
+) {
+  let dates = dateRange(date, before || date);
+  return csvOrRow<VehicleStop[]>(
     "vehicle_stops",
     VehicleStopMapper,
-    "lower(station_name) = lower($1) AND date = $2",
-    [station, date]
+    `lower(station_name) = lower($1) AND date IN (${dates
+      .map((_, i) => `$${i + 2}`)
+      .join(", ")})`,
+    [station, ...dates]
   );
-
-  return stops;
 }
 
 export async function hasVehicleStop(
@@ -390,4 +442,45 @@ export async function getConnectionFetch(
     [from, to, date]
   );
   return result.length === 0 ? null : result[0];
+}
+
+type ToCSV = Readable & { toResponse(): Response };
+
+export function toCSV<T>(
+  withMapping: boolean = true,
+  table: string,
+  fields: Record<string, string>,
+  where: string = "1=1",
+  whereArgs: any[] = [],
+  db: SQL = database
+): ToCSV {
+  const keys = Object.keys(fields);
+
+  async function* rowGenerator() {
+    const rows = db.unsafe(
+      `SELECT ${keys
+        .map((k) => '"' + k + '"')
+        .join(", ")} FROM ${table} WHERE ${where}`,
+      whereArgs
+    );
+
+    yield (withMapping ? Object.values(fields) : keys).join(",") + "\n";
+
+    for (const row of await rows) {
+      yield keys.map((k) => row[k]).join(",") + "\n";
+    }
+  }
+
+  const readable = Readable.from(rowGenerator());
+
+  (readable as ToCSV).toResponse = function () {
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${table}.csv"`,
+      },
+    });
+  };
+
+  return readable as ToCSV;
 }

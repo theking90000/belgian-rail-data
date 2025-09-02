@@ -42,17 +42,42 @@ Bun.serve({
 
       if (!date) date = irail.toDate(new Date());
 
-      const stops = await data.getStationStops(station, parseInt(date, 10));
+      const stops = await data.getStationStops(station, date).get();
 
       return Response.json(stops);
+    },
+    "/:id": async (req) => {
+      const search = new URL(req.url).searchParams;
+      const before = search.get("before") || irail.toDate(new Date());
+      let beforeDate = data.toJSDate(before);
+      beforeDate.setDate(beforeDate.getDate() - 10);
+      const after = search.get("after") || irail.toDate(beforeDate);
+
+      let id = req.params.id as string;
+      if (id.endsWith(".csv")) {
+        id = id.slice(0, -4);
+        // Check if id is vehicle
+        const info = await data.getVehicleInfo(id);
+        if (info) {
+          return data
+            .getVehicleStopsDated(id, after, before)
+            .csv(false)
+            .toResponse();
+        }
+        // Check station
+        return data.getStationStops(id, after, before).csv().toResponse();
+      }
+      return new Response("", { headers: {} });
     },
   }),
 });
 
 console.log(" * server up and running");
 
+type RRequest = Request & { params: any };
+
 type HTTPMethodHandler = (
-  request: Request,
+  request: RRequest,
   env?: any,
   ctx?: any
 ) => Promise<Response> | Response;
@@ -74,7 +99,7 @@ type BunRoutes = {
 export function m(...args: BunRoutes[]): BunRoutes {
   const excu =
     (func: HTTPMethodHandler) =>
-    async (request: Request, env: any, ctx: any) => {
+    async (request: RRequest, env: any, ctx: any) => {
       let start = Bun.nanoseconds();
       let id = crypto.randomUUID();
 
