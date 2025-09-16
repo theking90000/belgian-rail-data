@@ -74,6 +74,25 @@ Bun.serve({
       }
       return new Response("", { headers: {} });
     },
+    "/routes.csv": async (req) => {
+      const search = new URL(req.url).searchParams;
+      const before = search.get("before") || irail.toDate(new Date());
+      let beforeDate = data.toJSDate(before);
+      beforeDate.setDate(beforeDate.getDate() - 10);
+      const after = search.get("after") || irail.toDate(beforeDate);
+
+      let from = search.get("from");
+      let to = search.get("to");
+      if (!from || !to)
+        return new Response("Missing from or to query parameters", {
+          status: 400,
+        });
+
+      return data
+        .getConnectionDated(from, to, after, before)
+        .csv(false)
+        .toResponse();
+    },
   }),
 });
 

@@ -446,6 +446,27 @@ export async function getConnectionFetch(
   return result.length === 0 ? null : result[0];
 }
 
+export function getConnectionDated(
+  from: string,
+  to: string,
+  date: string,
+  before?: string
+) {
+  let dates = dateRange(date, before || date);
+  return csvOrRow<Connection[]>(
+    "connections",
+    ConnectionMapper,
+    `"from" LIKE $1 ESCAPE '\\' AND "to" LIKE $2 ESCAPE '\\' AND date IN (${dates
+      .map((_, i) => `$${i + 3}`)
+      .join(", ")})`,
+    [
+      `%${from.replace(/([%_\\])/g, "\\$1")}%`,
+      `%${to.replace(/([%_\\])/g, "\\$1")}%`,
+      ...dates,
+    ]
+  );
+}
+
 type ToCSV = Readable & { toResponse(): Response };
 
 export function toCSV<T>(
