@@ -306,6 +306,25 @@ export function getStationStops(
   );
 }
 
+export function getVehicleStopsFromTo(
+  id: string,
+  from: string,
+  to: string,
+  before: string,
+  after: string
+) {
+  let dates = dateRange(after, before || after);
+  console.log(after, before, dates);
+  return csvOrRow<VehicleStop[]>(
+    "vehicle_stops",
+    VehicleStopMapper,
+    `vehicle_id = $1 AND (station_name = $2 OR station_name = $3) AND date IN (${dates
+      .map((_, i) => `$${i + 4}`)
+      .join(", ")})`,
+    [id, from, to, ...dates]
+  );
+}
+
 export async function hasVehicleStop(
   vehicle: string,
   date: number

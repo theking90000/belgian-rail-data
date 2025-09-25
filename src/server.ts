@@ -93,6 +93,61 @@ Bun.serve({
         .csv(false)
         .toResponse();
     },
+
+    "/find-routes": async (req) => {
+      const search = new URL(req.url).searchParams;
+      const from = search.get("from");
+      const to = search.get("to");
+
+      const date = search.get("date") || irail.toDate(new Date());
+      const time = search.get("time") || irail.toTime(new Date());
+
+      if (!from || !to)
+        return new Response("Missing from or to query parameters", {
+          status: 400,
+        });
+
+      const data = await irail.listConnections({ from, to, date, time });
+      return Response.json(data);
+    },
+
+    "/tracked-vehicle": async (req) => {
+      const tracked = await config.getTrackedVehicles();
+      return Response.json({ tracked });
+    },
+
+    "/stops-route": async (req) => {
+      const search = new URL(req.url).searchParams;
+
+      const before = search.get("before") || irail.toDate(new Date());
+      let beforeDate = data.toJSDate(before);
+      beforeDate.setDate(beforeDate.getDate() - 10);
+      const after = search.get("after") || irail.toDate(beforeDate);
+
+      const id = search.get("id");
+      const from = search.get("from");
+      const to = search.get("to");
+
+      if (!id || !from || !to)
+        return new Response("Missing id or from/to query parameters", {
+          status: 400,
+        });
+
+      const stops = await data
+        .getVehicleStopsFromTo(id, from, to, before, after)
+        .get();
+      const composition = await data
+        .getVehicleComposition(id, after, before)
+        .get();
+
+      return Response.json({
+        stops: stops,
+        composition: composition.map((comp: any) => ({
+          ...comp,
+          detailed: undefined,
+        })),
+      });
+    },
   }),
 });
 
