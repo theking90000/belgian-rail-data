@@ -8,9 +8,13 @@
     "start": "bun run ./src/index.ts"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1"
   }
 }
