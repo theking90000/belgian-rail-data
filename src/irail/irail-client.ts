@@ -87,11 +87,11 @@ export class IRailAPIClient {
   }
 
   /** Fetch vehicle info by ID (API: /vehicle) */
-  vehicleApi(params: { id: string; date?: string }): Promise<VehicleResponse> {
+  getVehicle(params: { id: string; date?: string }): Promise<VehicleResponse> {
     return this.requestApi<VehicleResponse>("/vehicle", { query: params });
   }
   /** Fetch composition info (API: /composition) */
-  compositionApi(params: {
+  getComposition(params: {
     id: string;
     date: string;
   }): Promise<CompositionResponse> {
@@ -100,7 +100,7 @@ export class IRailAPIClient {
     });
   }
   /** Fetch train connections (API: /connections) */
-  connectionsApi(params: {
+  getConnections(params: {
     from: string;
     to: string;
     time?: string;
@@ -226,7 +226,7 @@ export class IRailAPIClient {
    */
   async listConnections(params: ListConnections): Promise<Connection[][]> {
     // Optionally log or add debug hooks here (in subclass)
-    const resp = await this.connectionsApi({
+    const resp = await this.getConnections({
       from: params.from,
       to: params.to,
       date: params.date ?? IRailAPIClient.toDate(new Date()),
