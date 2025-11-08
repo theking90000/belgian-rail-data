@@ -5,25 +5,54 @@
  * - All logic is invoked through orchestration or API layer—never direct DB/repo/service calls!
  */
 
+import { createApiServer } from "./api";
 import { bootstrapDependencies } from "./deps";
 
 // Optionally: use a CLI library; below is minimal
 function parseArgs() {
   const args = process.argv.slice(2);
+
+  const getFlag = <T = string>(
+    flag: string,
+    parseValue: (val: string | undefined) => T | undefined = (v) =>
+      v as T | undefined
+  ) => {
+    const idx = args.findIndex((arg) => arg === flag);
+    if (idx !== -1 && args[idx + 1]) {
+      return parseValue(args[idx + 1]);
+    }
+    return undefined;
+  };
+
   return {
     scheduler: args.includes("--scheduler"),
     wake: args.includes("--wake"),
     server: args.includes("--server"),
+    port: getFlag<number>("--port", (v) => {
+      if (!v) return undefined;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    }),
+
+    dbPath: (() => {
+      const idx = args.findIndex((arg) => arg === "--db");
+      if (idx !== -1 && args[idx + 1]) {
+        return args[idx + 1];
+      }
+      return undefined;
+    })(),
     // Add more flags as needed (db path, config, logging, etc)
   };
 }
 
 async function bootstrap() {
+  const flags = parseArgs();
+
   // 1. Load config, set up DB connection, logging as appropriate
   // (Config loading omitted for brevity, add as needed)
   const deps = await bootstrapDependencies({
     cache: { dir: "./cache", ttlMs: 24 * 60 * 60 * 1000 },
-    database: { type: "sqlite", filePath: "brd.db" },
+    database: { type: "sqlite", filePath: flags.dbPath || "brd.db" },
   });
 
   const { migrationManager, wakeService, schedulerService } = deps;
@@ -31,7 +60,7 @@ async function bootstrap() {
   await migrationManager.migrate();
 
   // 4. Parse CLI args and dispatch mode
-  const flags = parseArgs();
+
   if (flags.wake) {
     console.log("[Wake] Starting batch job for tracked trains…");
     await wakeService.wake();
@@ -43,9 +72,13 @@ async function bootstrap() {
     process.exit(0);
   }
   if (flags.server) {
-    // TODO: In next phase, spin up REST API (see API task)
-    console.log("[API] Server mode not yet implemented");
-    process.exit(1);
+    console.log("[Server] Starting API server… (Ctrl+C to stop)");
+    const app = await createApiServer(deps);
+
+    app.listen(flags.port || 3000, () => {
+      console.log(`[Server] Listening on port ${flags.port || 3000}`);
+    });
+    return;
   }
   console.log(
     "No valid mode flag specified. Use --wake, --scheduler, or --server."
