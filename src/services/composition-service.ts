@@ -54,8 +54,11 @@ export class DefaultCompositionService implements CompositionService {
     runId: number
   ): Promise<CompositionFetchResult> {
     // Canonicalize inputs
-    const tn =
+    let tn =
       typeof trainNumber === "number" ? trainNumber.toString() : trainNumber;
+
+    tn = tn.replace(/\D+/g, "");
+
     const dt = IRailAPIClient.toDate(date);
 
     if (

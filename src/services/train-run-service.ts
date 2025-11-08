@@ -44,7 +44,10 @@ export class DefaultTrainRunService implements TrainRunService {
      */
     async fetchAndStoreRun(trainNumber: string | number, date: string | Date): Promise<TrainRunFetchResult> {
         // Lookup canonical run in DB to check if already persisted
-        const tn = typeof trainNumber === "number" ? trainNumber.toString() : trainNumber;
+        let tn = typeof trainNumber === "number" ? trainNumber.toString() : trainNumber;
+
+        tn =  tn.replace(/\D+/g, "");
+
         const dt = typeof date === "string"
             ? date.slice(8, 10) + date.slice(5, 7) + date.slice(2, 4)
             : date.getDate().toString().padStart(2, "0") +
@@ -68,7 +71,7 @@ export class DefaultTrainRunService implements TrainRunService {
         }
 
         // Persist to database via repository (simplified)
-        const updated = await this.repository.saveRunStops(tn, dt, runData.stops.stop);
+        const updated = await this.repository.saveRunStops(tn, dt, runData.vehicleinfo, runData.stops.stop);
 
         return {
             fetched: true,

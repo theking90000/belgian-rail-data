@@ -38,8 +38,10 @@ export class TrainRunRepository extends BaseRepository<TrainRun> {
     trainNumber: string | number,
     date: Date | string
   ): Promise<TrainRun | null> {
-    const tn =
+    let tn =
       typeof trainNumber === "number" ? trainNumber.toString() : trainNumber;
+
+    tn = tn.replace(/\D+/g, "");
 
     const dt =
       typeof date === "string"
@@ -71,6 +73,7 @@ export class TrainRunRepository extends BaseRepository<TrainRun> {
   async saveRunStops(
     trainNumber: string | number,
     date: Date | string,
+    vehicleInfo: VehicleResponse["vehicleinfo"],
     stops: VehicleResponse["stops"]["stop"]
   ): Promise<number> {
     if (stops.length === 0) {
@@ -123,6 +126,7 @@ export class TrainRunRepository extends BaseRepository<TrainRun> {
       // UPSERT train_run (update if exists, insert if new)
       const [run] = await this.upserts([
         {
+          trainType: vehicleInfo.type,
           trainNumber: tn,
           departureStationId,
           arrivalStationId,

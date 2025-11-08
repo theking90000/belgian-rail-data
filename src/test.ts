@@ -10,6 +10,7 @@ import { TrainCompositionUnitRepository } from "./repositories/trainCompositionU
 import { TrainRunRepository } from "./repositories/trainRun.repository";
 import { TrainStopRepository } from "./repositories/trainStop.repository";
 import { DefaultCompositionService } from "./services/composition-service";
+import { IRailGTFSService } from "./services/gtfs-service";
 import { DefaultTrainRunService } from "./services/train-run-service";
 
 const db = await createDbConnection({ type: "sqlite", filePath: "test.db" });
@@ -37,9 +38,15 @@ const compositionService = new DefaultCompositionService(
   )
 );
 
+const gtfs = new IRailGTFSService();
+
 try {
-  const train = "IC13776";
+  const train = "IC13761";
   const date = new Date();
+
+  const r = await gtfs.getSchedule(train, date);
+
+  console.log("GTFS Schedule:", r);
 
   const p = await trainRunService.fetchAndStoreRun(train, date);
   console.log("Fetch and store completed");

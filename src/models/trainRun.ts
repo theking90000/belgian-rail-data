@@ -19,6 +19,11 @@ export interface TrainRun {
   id: number;
 
   /**
+   * Type of train (Database: train_run.train_type)
+   */
+  trainType: string;
+
+  /**
    * Public train number, unique per day/route (Database: train_run.train_number)
    */
   trainNumber: string;
