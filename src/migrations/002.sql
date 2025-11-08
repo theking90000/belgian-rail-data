@@ -42,9 +42,11 @@ DROP TABLE train_composition;
 CREATE TABLE train_composition_segment (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     
-    run_id INTEGER REFERENCES train_run(id) UNIQUE,
+    run_id INTEGER REFERENCES train_run(id),
     origin_station_id INTEGER REFERENCES station(id),
-    destination_station_id INTEGER REFERENCES station(id)
+    destination_station_id INTEGER REFERENCES station(id),
+
+    UNIQUE (run_id, origin_station_id, destination_station_id)
 );
 
 CREATE TABLE train_composition_unit (    

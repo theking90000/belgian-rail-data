@@ -11,4 +11,10 @@ export class TrainCompositionUnitRepository extends BaseRepository<TrainComposit
   constructor(connection: DBConnection) {
     super("train_composition_unit", connection);
   }
+
+  async upserts(
+    units: TrainCompositionUnit[]
+  ): Promise<TrainCompositionUnit[]> {
+    return this._upserts(units, ["segmentId", "unitId", "unitSequence"]);
+  }
 }

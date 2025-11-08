@@ -30,27 +30,6 @@ export class StationRepository extends BaseRepository<Station> {
    * @returns Array of upserted stations with ids
    */
   async upserts(stations: Omit<Station, "id">[]): Promise<Station[]> {
-    return await this.connection.transaction(async () => {
-      const existingStations = await this.connection.query(
-        `SELECT * FROM ${this.table} WHERE code IN (${stations.map(() => '?').join(',')})`,
-        stations.map((s) => s.code)
-      );
-
-      const existingMap: Record<string, Station> = {};
-      for (const row of existingStations) {
-        existingMap[row.code] = this.mapFromDb<Station>(row);
-      }
-
-      // Insert missing stations
-      const toInsert = stations.filter((s) => !existingMap[s.code]);
-
-      const insertedStations: Station[] = await this.create(toInsert);
-
-      for (const station of insertedStations) {
-        existingMap[station.code] = station;
-      }
-
-      return stations.map((s) => existingMap[s.code]!);
-    });
+    return this._upserts(stations, ["code"]);
   }
 }

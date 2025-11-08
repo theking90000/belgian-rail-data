@@ -86,6 +86,82 @@ export abstract class BaseRepository<T> {
     return true;
   }
 
+  /**
+   * Generic upsert method for entities with unique keys.
+   * @param entities - Array of entities to upsert (without id)
+   * @param uniqueKeys - Array of keys that uniquely identify an entity
+   * @returns Promise of upserted entities (with ids)
+   */
+  protected async _upserts<UK extends keyof T>(
+    entities: Omit<T, "id">[],
+    uniqueKeys: UK[]
+  ): Promise<T[]> {
+    return this.connection.transaction(async () => {
+      if (entities.length === 0) return [];
+
+      // Build WHERE clause for unique keys
+      const whereTuples = entities
+        .map(() => `(${uniqueKeys.map(() => "?").join(", ")})`)
+        .join(", ");
+      const whereValues = entities
+        .map((e) => uniqueKeys.map((k) => (e as any)[k]))
+        .flat();
+
+      const existingRows = await this.connection.query(
+        `SELECT * FROM ${this.table} WHERE (${uniqueKeys.map((s) => this.camelToSnake(s as string)).join(", ")}) IN (${whereTuples})`,
+        whereValues
+      );
+
+      // Build a map for quick lookup: keyString -> entity
+      const keyString = (e: any) =>
+        uniqueKeys.map((k) => String(e[k])).join("|");
+      const existingMap = new Map<string, T>();
+      for (const row of existingRows) {
+        const entity = this.mapFromDb<T>(row);
+        existingMap.set(keyString(entity), entity);
+      }
+
+      const uniqueInserts = new Set<string>();
+      // Find which to insert and which to update
+      const toInsert: Omit<T, "id">[] = entities.filter(
+        (e) => !existingMap.has(keyString(e))
+      ).filter((e) => {
+        const ks = keyString(e);
+        if (uniqueInserts.has(ks)) {
+          return false;
+        } else {
+          uniqueInserts.add(ks);
+          return true;
+        }
+      });
+      const toUpdate: T[] = entities
+        .map((e) => {
+          const existing = existingMap.get(keyString(e));
+          return existing && !this.compareObjects(e, existing, ["id"])
+            ? { ...e, id: (existing as any).id }
+            : null;
+        })
+        .filter(Boolean) as T[];
+
+      // Insert new entities
+      const inserted = await this.create(toInsert);
+
+      // Update changed entities
+      for (const e of toUpdate) {
+        await this.update((e as any).id, e);
+        existingMap.set(keyString(e), e);
+      }
+
+      // Add inserted to map
+      for (const e of inserted) {
+        existingMap.set(keyString(e), e);
+      }
+
+      // Return in input order
+      return entities.map((e) => existingMap.get(keyString(e))!);
+    });
+  }
+
     /** Utility function to convert camelCase to snake_case. */
   protected camelToSnake(str: string): string {
     return str.replace(/([A-Z])/g, '_$1').toLowerCase();

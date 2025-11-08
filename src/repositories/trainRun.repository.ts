@@ -31,75 +31,30 @@ export class TrainRunRepository extends BaseRepository<TrainRun> {
     trainNumber: string | number,
     date: Date | string
   ): Promise<boolean> {
+    return (await this.getRun(trainNumber, date)) !== null;
+  }
+
+  async getRun(
+    trainNumber: string | number,
+    date: Date | string
+  ): Promise<TrainRun | null> {
     const tn =
       typeof trainNumber === "number" ? trainNumber.toString() : trainNumber;
+
     const dt =
       typeof date === "string"
         ? date.slice(0, 10)
         : date.toISOString().slice(0, 10);
 
-    const result = await this.connection.query(
-      `SELECT 1 FROM train_run WHERE train_number = ? AND DATE(planned_departure) = ? LIMIT 1`,
+    const row = await this.connection.get(
+      `SELECT * FROM train_run WHERE train_number = ? AND DATE(planned_departure) = ? LIMIT 1`,
       [tn, dt]
     );
-    return result.length > 0;
+    return row ? this.mapFromDb(row) : null;
   }
 
   async upserts(run: Omit<TrainRun, "id">[]): Promise<TrainRun[]> {
-    return this.connection.transaction(async () => {
-      const existingRuns = await this.connection.query(
-        `SELECT * FROM ${this.table} WHERE (train_number, planned_departure) IN (${run.map(() => '(?, ?)').join(', ')})`,
-        run.map((r) => [r.trainNumber, r.plannedDeparture]).flat()
-      );
-      // (trainNumber, plannedDeparture) -> TrainRun
-      const existingMap = new Map<string, Map<string, TrainRun>>();
-      for (const row of existingRuns) {
-        const tr = this.mapFromDb<TrainRun>(row);
-
-        if (!existingMap.has(tr.trainNumber)) {
-          existingMap.set(tr.trainNumber, new Map<string, TrainRun>());
-        }
-        existingMap.get(tr.trainNumber)!.set(tr.plannedDeparture, tr);
-      }
-
-      const toInsert: Omit<TrainRun, "id">[] = run.filter(
-        (r) =>
-          !existingMap.has(r.trainNumber) ||
-          !existingMap.get(r.trainNumber)!.has(r.plannedDeparture)
-      );
-
-      const toUpdate: TrainRun[] = run
-        .map((r) => {
-          const dataRow = existingMap
-            .get(r.trainNumber)
-            ?.get(r.plannedDeparture);
-          return [r, dataRow] as const;
-        })
-        .filter(([r, dataRow]) => {
-          if (!dataRow) return false;
-          // Compare fields for changes
-          return !this.compareObjects(r, dataRow, ["id"]);
-        })
-        .map(([r, dataRow]) => ({ ...r, id: dataRow!.id }));
-
-      const insertedRuns: TrainRun[] = await this.create(toInsert);
-
-      for (const run of insertedRuns) {
-        if (!existingMap.has(run.trainNumber)) {
-          existingMap.set(run.trainNumber, new Map<string, TrainRun>());
-        }
-        existingMap.get(run.trainNumber)!.set(run.plannedDeparture, run);
-      }
-
-      for (const run of toUpdate) {
-        await this.update(run.id!, run);
-        existingMap.get(run.trainNumber)!.set(run.plannedDeparture, run);
-      }
-
-      return run.map(
-        (r) => existingMap.get(r.trainNumber)!.get(r.plannedDeparture)!
-      );
-    });
+    return this._upserts(run, ["trainNumber", "plannedDeparture"]);
   }
 
   /**
