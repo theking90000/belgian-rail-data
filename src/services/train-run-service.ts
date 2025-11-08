@@ -45,7 +45,11 @@ export class DefaultTrainRunService implements TrainRunService {
     async fetchAndStoreRun(trainNumber: string | number, date: string | Date): Promise<TrainRunFetchResult> {
         // Lookup canonical run in DB to check if already persisted
         const tn = typeof trainNumber === "number" ? trainNumber.toString() : trainNumber;
-        const dt = typeof date === "string" ? date.slice(0, 10) : date.toISOString().slice(0, 10);
+        const dt = typeof date === "string"
+            ? date.slice(8, 10) + date.slice(5, 7) + date.slice(2, 4)
+            : date.getDate().toString().padStart(2, "0") +
+              (date.getMonth() + 1).toString().padStart(2, "0") +
+              date.getFullYear().toString().slice(2, 4);
 
         if (await this.repository.isRunUpToDate(tn, date)) {
             return { fetched: false, alreadyUpToDate: true };

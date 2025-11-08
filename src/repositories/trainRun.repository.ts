@@ -48,8 +48,8 @@ export class TrainRunRepository extends BaseRepository<TrainRun> {
   async upserts(run: Omit<TrainRun, "id">[]): Promise<TrainRun[]> {
     return this.connection.transaction(async () => {
       const existingRuns = await this.connection.query(
-        `SELECT * FROM ${this.table} WHERE train_number = ? AND planned_departure = ?`,
-        [run.map((r) => r.trainNumber), run.map((r) => r.plannedDeparture)]
+        `SELECT * FROM ${this.table} WHERE (train_number, planned_departure) IN (${run.map(() => '(?, ?)').join(', ')})`,
+        run.map((r) => [r.trainNumber, r.plannedDeparture]).flat()
       );
       // (trainNumber, plannedDeparture) -> TrainRun
       const existingMap = new Map<string, Map<string, TrainRun>>();

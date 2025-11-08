@@ -16,7 +16,7 @@ export class MigrationsManager {
     const row = await this.dbConnection.query(
       "SELECT id FROM migrations ORDER BY id DESC LIMIT 1"
     );
-    return row.length === 1 ? row[0].id : 0;
+    return row.length === 1 ? row[0].id : -1;
   }
 
   private async setMigrationApplied(id: number): Promise<void> {

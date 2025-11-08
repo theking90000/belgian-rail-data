@@ -18,8 +18,8 @@ export class TrainStopRepository extends BaseRepository<TrainStop> {
       const runIds = [...new Set(stops.map((s) => s.runId))];
 
       const existing = await this.connection.query(
-        `SELECT * FROM ${this.table} WHERE run_id IN (?)`,
-        [runIds]
+        `SELECT * FROM ${this.table} WHERE run_id IN (${runIds.map(() => "?").join(",")})`,
+        runIds
       );
 
       /** (runId, stopSequence) */
@@ -89,7 +89,7 @@ export class TrainStopRepository extends BaseRepository<TrainStop> {
       actualDeparture: stop.left === "1" ? actualDep.toISOString() : null,
       platform: stop.platform,
       delaySec: Number(stop.delay) || null,
-      occupancyPct: this.occupancyToPct(stop.occupancy!.name),
+      occupancyPct: this.occupancyToPct(stop.occupancy?.name),
     };
   }
 

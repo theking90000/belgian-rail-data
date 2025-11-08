@@ -32,8 +32,8 @@ export class StationRepository extends BaseRepository<Station> {
   async upserts(stations: Omit<Station, "id">[]): Promise<Station[]> {
     return await this.connection.transaction(async () => {
       const existingStations = await this.connection.query(
-        `SELECT * FROM ${this.table} WHERE code IN (?)`,
-        [stations.map((s) => s.code)]
+        `SELECT * FROM ${this.table} WHERE code IN (${stations.map(() => '?').join(',')})`,
+        stations.map((s) => s.code)
       );
 
       const existingMap: Record<string, Station> = {};

@@ -11,7 +11,7 @@
  * Extension: To add PostgreSQL, implement a class conforming to DBConnection using 'pg'.
  */
 
-import Database from "better-sqlite3";
+import Database from "bun:sqlite";
 // import { Pool } from 'pg' // For future use
 
 export type QueryResult = any[]; // Table-shaped rows (should be typed at repo/DAO)
@@ -35,26 +35,26 @@ export interface DBConnection {
  * For real apps, use pooled/async-driver or migrate to Kysely/knex for unified support.
  */
 export class SqliteConnection implements DBConnection {
-  private db: Database.Database;
+  private db: Database;
 
   constructor(private readonly filePath: string) {
     this.db = this.createConnection();
   }
 
-  private createConnection(): Database.Database {
+  private createConnection(): Database {
     const db = new Database(this.filePath);
-    db.pragma("journal_mode = WAL");
+    db.run("PRAGMA journal_mode = WAL");
     return db;
   }
 
   async query(sql: string, params: any[] = []): Promise<QueryResult> {
     const stmt = this.db.prepare(sql);
-    return stmt.all(params);
+    return stmt.all(...params);
   }
 
   async get(sql: string, params: any[] = []): Promise<any> {
     const stmt = this.db.prepare(sql);
-    return stmt.get(params);
+    return stmt.get(...params);
   }
 
   async transaction<T>(fn: () => Promise<T>): Promise<T> {
@@ -62,7 +62,7 @@ export class SqliteConnection implements DBConnection {
       .transaction(() => {
         return fn();
       })
-      .default();
+      .deferred();
   }
 
   async close(): Promise<void> {
