@@ -27,6 +27,8 @@ import { MaterialUnitRepository } from "./repositories/materialUnit.repository";
 import { DefaultCompositionService } from "./services/composition-service";
 import { MigrationsManager } from "./db/migrationsManager";
 import migrations from "./migrations";
+import { LoggedIRailAPIClient } from "./irail/logged-irail-client";
+import { LogEntryRepository } from "./repositories/logEntry.repository";
 
 // Optionally: use a CLI library; below is minimal
 function parseArgs() {
@@ -49,9 +51,8 @@ async function bootstrap() {
 
   const migrationManager = new MigrationsManager(db, migrations);
 
-  const irail = new IRailAPIClient();
-
   // 2. Instantiate repositories
+  const logEntryRepo = new LogEntryRepository(db);
   const stationRepo = new StationRepository(db);
   const trainStopRepo = new TrainStopRepository(db);
   const trainRunRepo = new TrainRunRepository(db, stationRepo, trainStopRepo);
@@ -69,6 +70,8 @@ async function bootstrap() {
   );
 
   // 3. Instantiate services (wire dependencies DI style)
+  const irail = new LoggedIRailAPIClient(logEntryRepo);
+
   const gtfsService = new CachedGTFSService(new IRailGTFSService(), cache);
   const fetchEligibility = new DefaultFetchEligibilityService(
     gtfsService,

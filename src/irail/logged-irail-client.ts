@@ -30,18 +30,23 @@ export class LoggedIRailAPIClient extends IRailAPIClient {
       let error: string | null = null;
       let resp: T | null = null;
 
+      let result: T|null;
+      let err2: any;
+
       try {
         // Call the parent class for actual API
-        const result = await super.requestApi<T>(endpoint, init);
+        result = await super.requestApi<T>(endpoint, init);
         statusCode = 200; // If no error, assume 200
         resp = result;
         // Attempt best-effort statusCode from fetch() if supported
         // NOTE: see if parent returns more status data for improvement
-        return result;
+        // return result;
+        
       } catch (err: any) {
         statusCode = typeof err?.status === "number" ? err.status : null;
         error = err?.message || String(err);
-        throw err;
+        // throw err;
+        err2 = err;
       } finally {
         const log: Omit<LogEntry, "id"> = {
           logTime: new Date().toISOString(),
@@ -51,12 +56,12 @@ export class LoggedIRailAPIClient extends IRailAPIClient {
             ? `IRail API FAILED: ${endpoint} (${error})`
             : `IRail API OK: ${endpoint}`,
           statusCode: statusCode,
-          details: {
+          details: JSON.stringify({
             query: (init && init.query) || undefined,
             response: resp || undefined,
             error: error || undefined,
             at: startTime.toISOString(),
-          },
+          }),
         };
         // Insert, ignoring errors
         try {
@@ -65,5 +70,11 @@ export class LoggedIRailAPIClient extends IRailAPIClient {
           // silent fail to prevent logging error from bubbling to user
         }
       }
+
+      if (err2) {
+          throw err2;
+      }
+      
+      return result!;
     }
-  }
+}
