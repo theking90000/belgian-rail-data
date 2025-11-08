@@ -12,6 +12,7 @@ import {
 import { MigrationsManager } from "./db/migrationsManager";
 import { LoggedIRailAPIClient } from "./irail/logged-irail-client";
 import migrations from "./migrations";
+import { ApiKeyRepository } from "./repositories/apiKey.repository";
 import { LogEntryRepository } from "./repositories/logEntry.repository";
 import { MaterialTypeRepository } from "./repositories/materialType.repository";
 import { MaterialUnitRepository } from "./repositories/materialUnit.repository";
@@ -61,6 +62,7 @@ export interface Deps {
   compositionService: DefaultCompositionService;
   wakeService: DefaultWakeService;
   schedulerService: DefaultSchedulerService;
+  apiKeyRepository: ApiKeyRepository;
 }
 
 export async function bootstrapDependencies(config: Config): Promise<Deps> {
@@ -79,6 +81,7 @@ export async function bootstrapDependencies(config: Config): Promise<Deps> {
   const trainCompositionUnitRepo = new TrainCompositionUnitRepository(db);
   const materialTypeRepo = new MaterialTypeRepository(db);
   const materialUnitRepo = new MaterialUnitRepository(db, materialTypeRepo);
+  const apiKeyRepository = new ApiKeyRepository(db);
 
   const compositionSegmentRepo = new TrainCompositionSegmentRepository(
     db,
@@ -135,5 +138,6 @@ export async function bootstrapDependencies(config: Config): Promise<Deps> {
     compositionService,
     wakeService,
     schedulerService,
+    apiKeyRepository,
   };
 }
