@@ -51,6 +51,36 @@ For details on the schema, see `database.md` and migration files.
 
 ---
 
+## Service & Orchestration Refactoring Strategy
+
+### Orchestration Layer Responsibilities
+- Orchestration services (SchedulerService, WakeService) control when/how lower-level domain logic runs (not the logic itself).
+- **SchedulerService**: Schedules periodic and background jobs; triggers "business" services according to configuration/intervals.
+- **WakeService**: Handles one-shot batch/triggers (e.g., cron or manual wake), using same service APIs.
+- These take dependencies (train run/vehicle/etc. services; config; logging) via constructor injection for modularity/testability.
+- No repository, DB, or API access in orchestration layer—always delegates to service interfaces.
+
+### Domain Service Layer
+- **Domain/business services** (ex: TrainRunService, TrackedVehicleService) encapsulate logic for processing, fetching, and storing data.
+- These services expose clear, type-safe contracts (TypeScript interfaces/classes with JSDoc) and operate on models/entities.
+- Orchestration services call down to these, never duplicating business logic.
+
+### API Layer Placement
+- Expose all data and control flows (job triggers, connection/vehicle data, health, etc) through API endpoints.
+- Keep API server/router logic in a dedicated `src/api/` folder, using controllers to invoke orchestration and service layer functions.
+- API must authenticate and authorize access (no direct service access from outside the API layer).
+
+### Entry Points & Execution
+- Parse `--wake`, `--scheduler`, `--server`/`--api` flags only in top-level entrypoint (`src/main.ts`).
+- Start only the appropriate orchestration or API service, passing pre-wired dependencies.
+- Main file should initialize logging, config, handle signal/shutdown, and surface errors/metrics.
+
+### Coding & Documentation Policies
+- All files, classes, and methods must have JSDoc-style comments explaining their purpose, interfaces, and contracts.
+- Document dependencies, extension points, and usage patterns in the code and here as needed.
+
+---
+
 ## Contribution Practice
 - All core services must be decoupled/testable and conform to latest schema and API contract.
 - Discuss and document any major changes to architecture or endpoint contract in PRs or this file.
