@@ -31,6 +31,8 @@ export class TrainRunRepository extends BaseRepository<TrainRun> {
     trainNumber: string | number,
     date: Date | string
   ): Promise<boolean> {
+    // TODO: CHECKS if the train as arrived at its final destination on time
+    // i.e. plannedArrival + delay <= now()
     return (await this.getRun(trainNumber, date)) !== null;
   }
 
