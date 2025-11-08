@@ -30,6 +30,10 @@ import {
   type CacheService,
 } from "./services/cache-service";
 import { DefaultCompositionService } from "./services/composition-service";
+import {
+  DefaultDatabaseImporter,
+  type DatabaseImporter,
+} from "./services/database-importer";
 import { DefaultFetchEligibilityService } from "./services/fetch-eligibility-service";
 import { CachedGTFSService, IRailGTFSService } from "./services/gtfs-service";
 import { DefaultSchedulerService } from "./services/scheduler-service";
@@ -67,6 +71,7 @@ export interface Deps {
   apiKeyRepository: ApiKeyRepository;
   keyPermissionRepo: KeyPermissionRepository;
   permissionRepo: PermissionRepository;
+  databaseImporter: DatabaseImporter;
 }
 
 export async function bootstrapDependencies(config: Config): Promise<Deps> {
@@ -124,6 +129,12 @@ export async function bootstrapDependencies(config: Config): Promise<Deps> {
     wakeService
   );
 
+  const databaseImporter = new DefaultDatabaseImporter(
+    trainRunRepo,
+    compositionSegmentRepo,
+    irail
+  );
+
   return {
     db,
     cache,
@@ -147,5 +158,6 @@ export async function bootstrapDependencies(config: Config): Promise<Deps> {
     apiKeyRepository,
     keyPermissionRepo,
     permissionRepo,
+    databaseImporter,
   };
 }

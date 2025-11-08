@@ -26,6 +26,7 @@ function parseArgs() {
 
   return {
     help: args.includes("--help") || args.includes("-h"),
+    import: getFlag<string>("--import", (v) => v),
     scheduler: args.includes("--scheduler"),
     wake: args.includes("--wake"),
     server: args.includes("--server"),
@@ -88,6 +89,18 @@ async function bootstrap() {
     });
     return;
   }
+  if (flags.import) {
+    console.log(`[Import] Importing database from ${flags.import}…`);
+    const r = await deps.databaseImporter.importDatabase(flags.import);
+    if (r.imported) {
+      console.log(
+        `[Import] Successfully imported ${r.recordsImported} records.`
+      );
+    } else {
+      console.error(`[Import] Import failed: ${r.error}`);
+    }
+    process.exit(0);
+  }
 
   if (flags.createKey) {
     const permissions = flags.permissions?.split(",") || [
@@ -115,7 +128,7 @@ async function bootstrap() {
   }
 
   console.log(
-    "No valid mode flag specified. Use --wake, --scheduler, --create-key, or --server."
+    "No valid mode flag specified. Use --wake, --scheduler, --create-key, --import or --server."
   );
   console.log("Use --help for more information.");
   process.exit(1);
@@ -133,6 +146,7 @@ Flags:
   --wake               Run a one-off batch job for tracked trains
   --scheduler          Start the persistent scheduler service
   --server             Start the API server
+  --import             Import data from an old database file (specific path required)
   --port <number>      Specify the port for the API server (default: 3000)
   --db <path>          Path to the SQLite database file (default: brd.db)
   --create-key         Generate a new API key
