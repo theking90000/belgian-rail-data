@@ -11,7 +11,7 @@
  * Extension: To add PostgreSQL, implement a class conforming to DBConnection using 'pg'.
  */
 
-import Database from 'better-sqlite3';
+import Database from "better-sqlite3";
 // import { Pool } from 'pg' // For future use
 
 export type QueryResult = any[]; // Table-shaped rows (should be typed at repo/DAO)
@@ -37,8 +37,14 @@ export interface DBConnection {
 export class SqliteConnection implements DBConnection {
   private db: Database.Database;
 
-  constructor(filePath: string) {
-    this.db = new Database(filePath);
+  constructor(private readonly filePath: string) {
+    this.db = this.createConnection();
+  }
+
+  private createConnection(): Database.Database {
+    const db = new Database(this.filePath);
+    db.pragma("journal_mode = WAL");
+    return db;
   }
 
   async query(sql: string, params: any[] = []): Promise<QueryResult> {
@@ -52,15 +58,11 @@ export class SqliteConnection implements DBConnection {
   }
 
   async transaction<T>(fn: () => Promise<T>): Promise<T> {
-    this.db.exec('BEGIN');
-    try {
-      const result = await fn();
-      this.db.exec('COMMIT');
-      return result;
-    } catch (e) {
-      this.db.exec('ROLLBACK');
-      throw e;
-    }
+    return this.db
+      .transaction(() => {
+        return fn();
+      })
+      .default();
   }
 
   async close(): Promise<void> {
@@ -75,19 +77,21 @@ export class SqliteConnection implements DBConnection {
  * Usage:
  *   const db = await createDbConnection({ type: 'sqlite', filePath: 'db.sqlite3' });
  */
-export async function createDbConnection(options: {
-  type: 'sqlite',
-  filePath: string,
-}/* | {
+export async function createDbConnection(
+  options: {
+    type: "sqlite";
+    filePath: string;
+  } /* | {
   type: 'postgres',
   connectionString: string
-}*/) : Promise<DBConnection> {
-  if (options.type === 'sqlite') {
+}*/
+): Promise<DBConnection> {
+  if (options.type === "sqlite") {
     return new SqliteConnection(options.filePath);
   }
   // else if (options.type === 'postgres') {
   //   // Implement PostgresConnection conforming to DBConnection
   //   return new PostgresConnection(options.connectionString);
   // }
-  throw new Error('Unsupported DB backend');
+  throw new Error("Unsupported DB backend");
 }

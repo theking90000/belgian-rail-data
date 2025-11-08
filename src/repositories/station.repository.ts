@@ -4,20 +4,53 @@
  * Extends base repository with Station typing and custom lookup helpers.
  * All station persistence logic is centralized here.
  */
-import { BaseRepository } from '../db/baseRepository';
-import type { DBConnection } from '../db/connection';
-import type { Station } from '../models/station';
+import { BaseRepository } from "../db/baseRepository";
+import type { DBConnection } from "../db/connection";
+import type { Station } from "../models/station";
 
 export class StationRepository extends BaseRepository<Station> {
   constructor(connection: DBConnection) {
-    super('station', connection);
+    super("station", connection);
   }
 
   /**
    * Find a station by its unique code (mnemonic).
    */
   async findByCode(code: string): Promise<Station | null> {
-    const row = await this.connection.get('SELECT * FROM station WHERE code = ?', [code]);
-    return row ? row as Station : null;
+    const row = await this.connection.get(
+      "SELECT * FROM station WHERE code = ?",
+      [code]
+    );
+    return row ? (row as Station) : null;
+  }
+
+  /**
+   * Upsert multiple stations by code.
+   * @param stations - Array of stations to upsert (without id)
+   * @returns Array of upserted stations with ids
+   */
+  async upserts(stations: Omit<Station, "id">[]): Promise<Station[]> {
+    return await this.connection.transaction(async () => {
+      const existingStations = await this.connection.query(
+        `SELECT * FROM ${this.table} WHERE code IN (?)`,
+        [stations.map((s) => s.code)]
+      );
+
+      const existingMap: Record<string, Station> = {};
+      for (const row of existingStations) {
+        existingMap[row.code] = this.mapFromDb<Station>(row);
+      }
+
+      // Insert missing stations
+      const toInsert = stations.filter((s) => !existingMap[s.code]);
+
+      const insertedStations: Station[] = await this.create(toInsert);
+
+      for (const station of insertedStations) {
+        existingMap[station.code] = station;
+      }
+
+      return stations.map((s) => existingMap[s.code]!);
+    });
   }
 }
