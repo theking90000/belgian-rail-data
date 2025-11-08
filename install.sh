@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# SNCB Insights Installation Script for Linux VPS
+# Belgian Rail Data Installation Script for Linux VPS
 # Usage: ./install.sh [user@]hostname [ssh-options]
 
 set -e
@@ -39,11 +39,11 @@ APP_NAME=$(cat package.json | jq -r '.name')
 APP_VERSION=$(cat package.json | jq -r '.version')
 BINARY_NAME="${APP_NAME}-${APP_VERSION}-linux-x64"
 LOCAL_BINARY="target/${BINARY_NAME}"
-REMOTE_DIR="/opt/sncb"
-SYSTEMD_SERVICE="/etc/systemd/system/sncb-insights.service"
-CRON_FILE="/etc/cron.d/sncb-insights"
+REMOTE_DIR="/opt/belgian-rail-data"
+SYSTEMD_SERVICE="/etc/systemd/system/belgian-rail-data.service"
+CRON_FILE="/etc/cron.d/belgian-rail-data"
 
-log "Starting SNCB Insights installation on ${HOSTNAME}"
+log "Starting Belgian Rail Data installation on ${HOSTNAME}"
 
 # Check if local binary exists
 if [ ! -f "$LOCAL_BINARY" ]; then
@@ -83,39 +83,39 @@ error() {
 
 log "Starting remote installation..."
 
-# Create sncb user if it doesn't exist
-if ! id "sncb" &>/dev/null; then
-    log "Creating sncb system user..."
-    sudo useradd --system --no-create-home --shell /usr/sbin/nologin sncb
+# Create belgian-rail-data user if it doesn't exist
+if ! id "belgian-rail-data" &>/dev/null; then
+    log "Creating belgian-rail-data system user..."
+    sudo useradd --system --no-create-home --shell /usr/sbin/nologin belgian-rail-data
 else
-    log "User 'sncb' already exists"
+    log "User 'belgian-rail-data' already exists"
 fi
 
 # Create application directory
-log "Creating application directory: /opt/sncb"
-sudo mkdir -p /opt/sncb
-sudo chown sncb:sncb /opt/sncb
-sudo chmod 755 /opt/sncb
+log "Creating application directory: /opt/belgian-rail-data"
+sudo mkdir -p /opt/belgian-rail-data
+sudo chown belgian-rail-data:belgian-rail-data /opt/belgian-rail-data
+sudo chmod 755 /opt/belgian-rail-data
 
 # Set up the binary
 log "Setting up binary..."
-sudo mv /tmp/sncb-insights-binary /opt/sncb/sncb-insights
-sudo chown sncb:sncb /opt/sncb/sncb-insights
-sudo chmod 755 /opt/sncb/sncb-insights
+sudo mv /tmp/belgian-rail-data-binary /opt/belgian-rail-data/belgian-rail-data
+sudo chown belgian-rail-data:belgian-rail-data /opt/belgian-rail-data/belgian-rail-data
+sudo chmod 755 /opt/belgian-rail-data/belgian-rail-data
 
 # Create systemd service file
 log "Creating systemd service..."
-sudo tee /etc/systemd/system/sncb-insights.service > /dev/null << 'SYSTEMD_EOF'
+sudo tee /etc/systemd/system/belgian-rail-data.service > /dev/null << 'SYSTEMD_EOF'
 [Unit]
-Description=SNCB Insights Service
+Description=Belgian Rail Data Service
 After=network.target
 
 [Service]
 Type=simple
-User=sncb
-Group=sncb
-WorkingDirectory=/opt/sncb
-ExecStart=/opt/sncb/sncb-insights --server
+User=belgian-rail-data
+Group=belgian-rail-data
+WorkingDirectory=/opt/belgian-rail-data
+ExecStart=/opt/belgian-rail-data/belgian-rail-data --server --port 9004
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
@@ -126,55 +126,45 @@ StandardError=journal
 WantedBy=multi-user.target
 SYSTEMD_EOF
 
-# Create systemd override directory for port configuration
-log "Configuring service port..."
-sudo mkdir -p /etc/systemd/system/sncb-insights.service.d
-sudo tee /etc/systemd/system/sncb-insights.service.d/port.conf > /dev/null << 'PORT_EOF'
-[Service]
-Environment=PORT=9003
-PORT_EOF
-
-# Create cron job for wake command
-log "Setting up cron job for wake command..."
-sudo tee /etc/cron.d/sncb-insights > /dev/null << 'CRON_EOF'
-# SNCB Insights wake command - runs every hour
-0 * * * * sncb cd /opt/sncb && /opt/sncb/sncb-insights --wake >/dev/null 2>&1
+sudo tee /etc/cron.d/belgian-rail-data > /dev/null << 'CRON_EOF'
+# Belgian Rail Data wake command - runs every hour
+0 * * * * belgian-rail-data cd /opt/belgian-rail-data && /opt/belgian-rail-data/belgian-rail-data --wake >/dev/null 2>&1
 CRON_EOF
 
-sudo chmod 644 /etc/cron.d/sncb-insights
+sudo chmod 644 /etc/cron.d/belgian-rail-data
 
 # Reload systemd and enable service
 log "Enabling and starting service..."
 sudo systemctl daemon-reload
-sudo systemctl enable sncb-insights.service
+sudo systemctl enable belgian-rail-data.service
 
 # Start the service
-log "Starting SNCB Insights service..."
-sudo systemctl start sncb-insights.service
+log "Starting Belgian Rail Data service..."
+sudo systemctl start belgian-rail-data.service
 
 # Check service status
-if sudo systemctl is-active --quiet sncb-insights.service; then
+if sudo systemctl is-active --quiet belgian-rail-data.service; then
     log "Service started successfully!"
 else
-    error "Failed to start service. Check logs with: sudo journalctl -u sncb-insights.service"
+    error "Failed to start service. Check logs with: sudo journalctl -u belgian-rail-data.service"
 fi
 
 # Show service status
 log "Service status:"
-sudo systemctl status sncb-insights.service --no-pager -l
+sudo systemctl status belgian-rail-data.service --no-pager -l
 
 log "Installation completed successfully!"
 log "Service is running on port 9003"
 log "Wake command will run every hour via cron"
-log "Check logs with: sudo journalctl -u sncb-insights.service -f"
-log "Check service status with: sudo systemctl status sncb-insights.service"
+log "Check logs with: sudo journalctl -u belgian-rail-data.service -f"
+log "Check service status with: sudo systemctl status belgian-rail-data.service"
 
 EOF
 )
 
 # Upload binary to remote server
 log "Uploading binary to ${HOSTNAME}..."
-scp $SSH_OPTS "$LOCAL_BINARY" "$HOSTNAME:/tmp/sncb-insights-binary"
+scp $SSH_OPTS "$LOCAL_BINARY" "$HOSTNAME:/tmp/belgian-rail-data-binary"
 
 log "Binary uploaded successfully"
 
@@ -185,14 +175,14 @@ ssh $SSH_OPTS "$HOSTNAME" "bash -s" <<< "$INSTALL_SCRIPT"
 log "Installation completed!"
 log ""
 log "Summary:"
-log "  - Service: sncb-insights.service (running on port 9003)"
-log "  - User: sncb (system account)"
-log "  - Directory: /opt/sncb"
+log "  - Service: belgian-rail-data.service (running on port 9004)"
+log "  - User: belgian-rail-data (system account)"
+log "  - Directory: /opt/belgian-rail-data"
 log "  - Cron: Wake command runs every hour"
-log "  - Logs: sudo journalctl -u sncb-insights.service -f"
+log "  - Logs: sudo journalctl -u belgian-rail-data.service -f"
 log ""
 log "Service management commands:"
-log "  sudo systemctl status sncb-insights.service"
-log "  sudo systemctl stop sncb-insights.service"
-log "  sudo systemctl start sncb-insights.service"
-log "  sudo systemctl restart sncb-insights.service"
+log "  sudo systemctl status belgian-rail-data.service"
+log "  sudo systemctl stop belgian-rail-data.service"
+log "  sudo systemctl start belgian-rail-data.service"
+log "  sudo systemctl restart belgian-rail-data.service"
