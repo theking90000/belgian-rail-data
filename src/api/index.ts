@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 import { loggerMiddleware } from "./middlewares/logger";
 import healthRouter from "./routers/health";
 import trackedRouter from "./routers/tracked";
+import stopsRouter from "./routers/stops";
 
 export async function createApiServer(deps: Deps) {
   let app = new Elysia();
@@ -14,6 +15,7 @@ export async function createApiServer(deps: Deps) {
   app.use(healthRouter(deps));
 
   app.use(trackedRouter(deps));
+  app.use(stopsRouter(deps));
 
   return app;
 }

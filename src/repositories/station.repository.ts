@@ -32,4 +32,12 @@ export class StationRepository extends BaseRepository<Station> {
   async upserts(stations: Omit<Station, "id">[]): Promise<Station[]> {
     return this._upserts(stations, ["code"]);
   }
+
+  async findByName(name: string): Promise<Station | null> {
+    const row = await this.connection.get(
+      "SELECT * FROM station WHERE name = ?",
+      [name]
+    );
+    return row ? (row as Station) : null;
+  }
 }

@@ -106,6 +106,7 @@ async function bootstrap() {
     const permissions = flags.permissions?.split(",") || [
       "tracked:read",
       "tracked:write",
+      "stops:delays",
     ];
 
     const random = crypto.getRandomValues(new Uint8Array(32));
