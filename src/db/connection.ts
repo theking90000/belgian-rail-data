@@ -58,6 +58,7 @@ export class SqliteConnection implements DBConnection {
   }
 
   async transaction<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.db.inTransaction) return fn();
     return this.db
       .transaction(() => {
         return fn();

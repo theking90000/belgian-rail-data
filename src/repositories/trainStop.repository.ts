@@ -76,10 +76,10 @@ export class TrainStopRepository extends BaseRepository<TrainStop> {
     const plannedArr = new Date(Number(stop.scheduledArrivalTime) * 1000);
 
     const actualDep = new Date(
-      (Number(stop.scheduledDepartureTime) + Number(stop.departureDelay)) * 1000
+      (Number(stop.scheduledDepartureTime) + Number(stop.departureDelay||0)) * 1000
     );
     const actualArr = new Date(
-      (Number(stop.scheduledArrivalTime) + Number(stop.arrivalDelay)) * 1000
+      (Number(stop.scheduledArrivalTime) + Number(stop.arrivalDelay||0)) * 1000
     );
 
     return {
@@ -88,7 +88,7 @@ export class TrainStopRepository extends BaseRepository<TrainStop> {
       actualArrival: stop.arrived === "1" ? actualArr.toISOString() : null,
       actualDeparture: stop.left === "1" ? actualDep.toISOString() : null,
       platform: stop.platform,
-      delaySec: Number(stop.delay) || null,
+      delaySec: Number(stop.delay) || 0,
       occupancyPct: this.occupancyToPct(stop.occupancy?.name),
     };
   }
