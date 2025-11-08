@@ -10,7 +10,7 @@ import { bootstrapDependencies } from "./deps";
 
 // Optionally: use a CLI library; below is minimal
 function parseArgs() {
-  const args = process.argv.slice(2);
+  const args = process.argv.slice(1);
 
   const getFlag = <T = string>(
     flag: string,
@@ -25,6 +25,7 @@ function parseArgs() {
   };
 
   return {
+    help: args.includes("--help") || args.includes("-h"),
     scheduler: args.includes("--scheduler"),
     wake: args.includes("--wake"),
     server: args.includes("--server"),
@@ -49,6 +50,11 @@ function parseArgs() {
 
 async function bootstrap() {
   const flags = parseArgs();
+
+  if (flags.help) {
+    help();
+    process.exit(0);
+  }
 
   // 1. Load config, set up DB connection, logging as appropriate
   // (Config loading omitted for brevity, add as needed)
@@ -111,7 +117,32 @@ async function bootstrap() {
   console.log(
     "No valid mode flag specified. Use --wake, --scheduler, --create-key, or --server."
   );
+  console.log("Use --help for more information.");
   process.exit(1);
+}
+
+function help() {
+  console.log(`
+Belgian Rail Data CLI
+
+Usage:
+  ${Bun.argv.slice(0, 1)}
+
+Flags:
+  --help, -h           Show this help message
+  --wake               Run a one-off batch job for tracked trains
+  --scheduler          Start the persistent scheduler service
+  --server             Start the API server
+  --port <number>      Specify the port for the API server (default: 3000)
+  --db <path>          Path to the SQLite database file (default: brd.db)
+  --create-key         Generate a new API key
+  --permissions <list> Comma-separated permissions for the new API key (default: all permissions)
+
+Examples:
+  --server --port 8080
+  --wake
+  --create-key --permissions tracked:read,tracked:write
+`);
 }
 
 bootstrap().catch((err) => {
