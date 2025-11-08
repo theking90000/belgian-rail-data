@@ -1,6 +1,6 @@
 {
   "name": "sncb-insights",
-  "module": "src/index.ts",
+  "module": "src/main.ts",
   "type": "module",
   "version": "0.1.0",
   "private": true,
