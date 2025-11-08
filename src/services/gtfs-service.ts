@@ -9,6 +9,8 @@
  * - All methods and types fully documented for future maintainability
  */
 
+import type { CacheService } from "./cache-service";
+
 /** Detailed info per stop for the day's schedule (IRail GTFS schema) */
 export interface GTFSStop {
   /** NMBS/IRail numeric station code as string */
@@ -92,5 +94,37 @@ export class IRailGTFSService implements GTFSService {
       date: dt,
       stops,
     };
+  }
+}
+
+/**
+ * Cached wrapper for IRailGTFSService using a Map with 24h expiry.
+ */
+export class CachedGTFSService implements GTFSService {
+  constructor(
+    private delegate: GTFSService,
+    private cacheService: CacheService
+  ) {}
+
+  async getSchedule(
+    trainNumber: string | number,
+    date: string | Date
+  ): Promise<GTFSRunSchedule | null> {
+    const dt =
+      typeof date === "string"
+        ? date.slice(0, 10)
+        : date.toISOString().slice(0, 10);
+    const tn =
+      typeof trainNumber === "number"
+        ? trainNumber.toString()
+        : trainNumber.replace(/\D+/g, "");
+
+    return this.cacheService.process(
+      `gtfs_${tn}_${dt}`,
+      async () => {
+        return this.delegate.getSchedule(trainNumber, date);
+      },
+      24 * 60 * 60 * 1000
+    );
   }
 }

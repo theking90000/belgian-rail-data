@@ -10,9 +10,13 @@ import { TrainCompositionSegmentRepository } from "./repositories/trainCompositi
 import { TrainCompositionUnitRepository } from "./repositories/trainCompositionUnit.repository";
 import { TrainRunRepository } from "./repositories/trainRun.repository";
 import { TrainStopRepository } from "./repositories/trainStop.repository";
+import {
+  DefaultCacheService,
+  FileCacheBackend,
+} from "./services/cache-service";
 import { DefaultCompositionService } from "./services/composition-service";
 import { DefaultFetchEligibilityService } from "./services/fetch-eligibility-service";
-import { IRailGTFSService } from "./services/gtfs-service";
+import { CachedGTFSService, IRailGTFSService } from "./services/gtfs-service";
 import { DefaultSchedulerService } from "./services/scheduler-service";
 import { DefaultTrainRunService } from "./services/train-run-service";
 import { DefaultWakeService } from "./services/wake-service";
@@ -42,7 +46,10 @@ const compositionService = new DefaultCompositionService(
   )
 );
 
-const gtfs = new IRailGTFSService();
+const cacheBackend = new FileCacheBackend(24 * 60 * 60 * 1000, "./cache");
+const cacheService = new DefaultCacheService(cacheBackend);
+
+const gtfs = new CachedGTFSService(new IRailGTFSService(), cacheService);
 
 const fetchEligibilityService = new DefaultFetchEligibilityService(gtfs, tr);
 const wakeService = new DefaultWakeService(
