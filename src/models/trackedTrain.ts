@@ -25,4 +25,9 @@ export interface TrackedTrain {
    * Boolean; if true, this train is currently being tracked (Database: tracked_train.enabled)
    */
   enabled: boolean;
+
+  /**
+   * Timestamp when this train started being tracked (Database: tracked_train.tracked_since)
+   */
+  trackedSince: string;
 }
