@@ -7,10 +7,10 @@ export interface KeyPermission {
   /**
    * Foreign key referencing api_key.id (Database: key_permission.api_key_id)
    */
-  api_key_id: number;
+  apiKeyId: number;
 
   /**
    * Foreign key referencing permission.id (Database: key_permission.permission_id)
    */
-  permission_id: number;
+  permissionId: number;
 }

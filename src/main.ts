@@ -28,6 +28,8 @@ function parseArgs() {
     scheduler: args.includes("--scheduler"),
     wake: args.includes("--wake"),
     server: args.includes("--server"),
+    createKey: args.includes("--create-key"),
+    permissions: getFlag<string>("--permissions", (v) => v),
     port: getFlag<number>("--port", (v) => {
       if (!v) return undefined;
       const n = Number(v);
@@ -80,8 +82,34 @@ async function bootstrap() {
     });
     return;
   }
+
+  if (flags.createKey) {
+    const permissions = flags.permissions?.split(",") || [
+      "tracked:read",
+      "tracked:write",
+    ];
+
+    const random = crypto.getRandomValues(new Uint8Array(32));
+    const apiKey = Buffer.from(random).toString("hex");
+
+    const [createdKey] = await deps.apiKeyRepository.create([
+      {
+        descriptor: "CLI generated key",
+        key: apiKey,
+      },
+    ]);
+
+    await deps.keyPermissionRepo.addPermissionsToKey(
+      createdKey!.id,
+      permissions.map((p) => ({ name: p }))
+    );
+
+    console.log("Created API key:", "brd_" + apiKey);
+    process.exit(0);
+  }
+
   console.log(
-    "No valid mode flag specified. Use --wake, --scheduler, or --server."
+    "No valid mode flag specified. Use --wake, --scheduler, --create-key, or --server."
   );
   process.exit(1);
 }
