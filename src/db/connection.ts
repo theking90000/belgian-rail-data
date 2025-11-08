@@ -71,6 +71,10 @@ export class SqliteConnection implements DBConnection {
   }
 }
 
+export type DbConfig =
+  | { type: "sqlite"; filePath: string }
+  | { type: "postgres"; connectionString: string };
+
 /**
  * Factory for initializing the appropriate DB backend in future.
  * Pass 'sqlite' or 'postgres' config, or extend for later.
@@ -79,13 +83,7 @@ export class SqliteConnection implements DBConnection {
  *   const db = await createDbConnection({ type: 'sqlite', filePath: 'db.sqlite3' });
  */
 export async function createDbConnection(
-  options: {
-    type: "sqlite";
-    filePath: string;
-  } /* | {
-  type: 'postgres',
-  connectionString: string
-}*/
+  options: DbConfig
 ): Promise<DBConnection> {
   if (options.type === "sqlite") {
     return new SqliteConnection(options.filePath);
