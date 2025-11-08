@@ -70,16 +70,16 @@ export class TrainRunRepository extends BaseRepository<TrainRun> {
    * @param trainNumber - string or number (public number)
    * @param date - string or Date (YYYY-MM-DD)
    * @param stops - array of IRail vehicleApi stops
-   * @returns Number of stops inserted/updated
+   * @returns ID of the train_run record or null if no stops provided
    */
   async saveRunStops(
     trainNumber: string | number,
     date: Date | string,
     vehicleInfo: VehicleResponse["vehicleinfo"],
     stops: VehicleResponse["stops"]["stop"]
-  ): Promise<number> {
+  ): Promise<number|undefined> {
     if (stops.length === 0) {
-      return 0;
+      return undefined;
     }
 
     const tn =
@@ -150,7 +150,7 @@ export class TrainRunRepository extends BaseRepository<TrainRun> {
         }))
       );
 
-      return insertedStops.length;
+      return runId;
     });
   }
 }

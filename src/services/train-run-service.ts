@@ -14,7 +14,7 @@ import type { TrainRunRepository } from "../repositories/trainRun.repository";
 export interface TrainRunFetchResult {
     fetched: boolean;
     alreadyUpToDate: boolean;
-    stopsUpdated?: number;
+    runId?: number;
     error?: string;
 }
 
@@ -71,12 +71,12 @@ export class DefaultTrainRunService implements TrainRunService {
         }
 
         // Persist to database via repository (simplified)
-        const updated = await this.repository.saveRunStops(tn, dt, runData.vehicleinfo, runData.stops.stop);
+        const runId = await this.repository.saveRunStops(tn, dt, runData.vehicleinfo, runData.stops.stop);
 
         return {
             fetched: true,
             alreadyUpToDate: false,
-            stopsUpdated: updated,
+            runId, 
         };
     }
 }

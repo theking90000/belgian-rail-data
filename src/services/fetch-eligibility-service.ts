@@ -73,7 +73,7 @@ export class DefaultFetchEligibilityService implements FetchEligibilityService {
       };
     }
 
-    const lastStop = schedule.stops[0];
+    const lastStop = schedule.stops[schedule.stops.length - 1];
     if (!lastStop || !lastStop.scheduledArrival) {
       return {
         canFetchNow: false,
@@ -83,11 +83,10 @@ export class DefaultFetchEligibilityService implements FetchEligibilityService {
 
     // 2. Parse GTFS arrival time as Date
     const plannedArr = new Date(lastStop.scheduledArrival);
-
     // 3. Determine if it's too soon to fetch ("not yet departed" grace period)
     const now = new Date();
     const earliestAllowed = new Date(
-      plannedArr.getTime() -
+      plannedArr.getTime() +
         DefaultFetchEligibilityService.ELIGBLE_FOR_FETCH_AFTER_MINUTES * 60_000
     );
 
