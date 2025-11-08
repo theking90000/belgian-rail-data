@@ -54,7 +54,7 @@ export class MaterialUnitRepository extends BaseRepository<MaterialUnit> {
         }))
       );
 
-      const upsertedUnits = this.upserts(
+      const upsertedUnits = await this.upserts(
         units.map((unit, i) => ({
           unitNumber: unit.materialNumber,
           materialTypeId: types[i]!.id,

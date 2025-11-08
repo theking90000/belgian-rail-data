@@ -86,7 +86,7 @@ export class TrainCompositionSegmentRepository extends BaseRepository<TrainCompo
         await this.trainCompositionUnitRepository.upserts(
           units.map((u, j) => ({
             segmentId: upsertSegments[i]!.id,
-            unitId: u.id,
+            unitId: u?.id, // Sometimes fails here, to investigate
             unitSequence: j,
           }))
         );
