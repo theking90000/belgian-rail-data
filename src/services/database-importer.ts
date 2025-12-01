@@ -1,5 +1,5 @@
 import type { TrainRunRepository } from "@src/repositories/trainRun.repository";
-import { SqliteConnection } from "../db/connection";
+import { SqliteConnection } from "../db/sqlite";
 import type { TrainCompositionSegmentRepository } from "@src/repositories/trainCompositionSegment.repository";
 import { IRailAPIClient } from "@src/irail/irail-client";
 import type {

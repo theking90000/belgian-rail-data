@@ -61,7 +61,9 @@ async function bootstrap() {
   // (Config loading omitted for brevity, add as needed)
   const deps = await bootstrapDependencies({
     cache: { dir: "./cache", ttlMs: 24 * 60 * 60 * 1000 },
-    database: { type: "sqlite", filePath: flags.dbPath || "brd.db" },
+    database: flags.dbPath?.startsWith("postgresql://")
+      ? { type: "postgres", connectionString: flags.dbPath }
+      : { type: "sqlite", filePath: flags.dbPath || "brd.db" },
   });
 
   const { migrationManager, wakeService, schedulerService } = deps;

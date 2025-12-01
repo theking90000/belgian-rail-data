@@ -5,13 +5,14 @@
  *
  * - AGNOSTIC design: supports SQLite first, easily extendable to PostgreSQL.
  * - The exported interface is purposely minimal, with async query/tx scaffolding.
- * - Uses "better-sqlite3" (for SQLite) and outlines hooks for "pg" (for PostgreSQL).
  * - No ORM logic here: just connection, sanity, and raw query helpers.
  *
  * Extension: To add PostgreSQL, implement a class conforming to DBConnection using 'pg'.
  */
 
-import Database from "bun:sqlite";
+import { PostgresConnection } from "./postgresql";
+import { SqliteConnection } from "./sqlite";
+
 // import { Pool } from 'pg' // For future use
 
 export type QueryResult = any[]; // Table-shaped rows (should be typed at repo/DAO)
@@ -30,47 +31,6 @@ export interface DBConnection {
   close(): Promise<void>;
 }
 
-/**
- * SQLite specific implementation of DBConnection.
- * For real apps, use pooled/async-driver or migrate to Kysely/knex for unified support.
- */
-export class SqliteConnection implements DBConnection {
-  private db: Database;
-
-  constructor(private readonly filePath: string) {
-    this.db = this.createConnection();
-  }
-
-  private createConnection(): Database {
-    const db = new Database(this.filePath);
-    db.run("PRAGMA journal_mode = WAL");
-    return db;
-  }
-
-  async query(sql: string, params: any[] = []): Promise<QueryResult> {
-    const stmt = this.db.prepare(sql);
-    return stmt.all(...params);
-  }
-
-  async get(sql: string, params: any[] = []): Promise<any> {
-    const stmt = this.db.prepare(sql);
-    return stmt.get(...params);
-  }
-
-  async transaction<T>(fn: () => Promise<T>): Promise<T> {
-    if (this.db.inTransaction) return fn();
-    return this.db
-      .transaction(() => {
-        return fn();
-      })
-      .deferred();
-  }
-
-  async close(): Promise<void> {
-    this.db.close();
-  }
-}
-
 export type DbConfig =
   | { type: "sqlite"; filePath: string }
   | { type: "postgres"; connectionString: string };
@@ -87,10 +47,9 @@ export async function createDbConnection(
 ): Promise<DBConnection> {
   if (options.type === "sqlite") {
     return new SqliteConnection(options.filePath);
+  } else if (options.type === "postgres") {
+    //   // Implement PostgresConnection conforming to DBConnection
+    return new PostgresConnection(options.connectionString);
   }
-  // else if (options.type === 'postgres') {
-  //   // Implement PostgresConnection conforming to DBConnection
-  //   return new PostgresConnection(options.connectionString);
-  // }
   throw new Error("Unsupported DB backend");
 }

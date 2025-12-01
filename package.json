@@ -5,17 +5,19 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "start": "bun run ./src/index.ts"
+    "start": "bun run ./src/main.ts"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/pg": "^8.15.6"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
     "better-sqlite3": "^12.4.1",
-    "elysia": "^1.4.15"
+    "elysia": "^1.4.15",
+    "pg": "^8.16.3"
   }
 }
