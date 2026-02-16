@@ -13,7 +13,8 @@
     "@types/bun": "latest",
     "@types/pg": "^8.15.6",
     "bun2nix": "^2.0.8",
-    "node2nix": "^1.11.0"
+    "node2nix": "^1.11.0",
+    "synp": "^1.9.14"
   },
   "peerDependencies": {
     "typescript": "^5"
