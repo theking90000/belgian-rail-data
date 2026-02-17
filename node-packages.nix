@@ -94,15 +94,6 @@ let
         sha512 = "m0jEgYlYz+mDJZ2+F4v8D1AyQb+QzsNqRuI7xg1VQX/KlKS0qT9r1Mo16yo5F/MtifXFgaofIFsdFMox2SxIbQ==";
       };
     };
-    "@types/pg-8.16.0" = {
-      name = "_at_types_slash_pg";
-      packageName = "@types/pg";
-      version = "8.16.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/@types/pg/-/pg-8.16.0.tgz";
-        sha512 = "RmhMd/wD+CF8Dfo+cVIy3RR5cl8CyfXQ0tGgW6XBL8L4LM/UTEbNXYRbLwU6w+CgrKBNbrQWt4FUtTfaU5jSYQ==";
-      };
-    };
     "@yarnpkg/lockfile-1.1.0" = {
       name = "_at_yarnpkg_slash_lockfile";
       packageName = "@yarnpkg/lockfile";
@@ -1012,15 +1003,6 @@ let
         sha512 = "P2bSOMAc/ciLz6DzgjVlGJP9+BrJWu5UDGK70C2iweC5QBIeFf0ZXRvGjEj2uYgrY2MkAAhsSWHDWlFtEroZWw==";
       };
     };
-    "libpq-1.9.0" = {
-      name = "libpq";
-      packageName = "libpq";
-      version = "1.9.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/libpq/-/libpq-1.9.0.tgz";
-        sha512 = "/o/IlSJqHiwD5UoGUQnl/vxSEdsGEteuLyAQ1gYsZ/e/vqOP3E1AXp+4iqaGNYQJ+OVLb55iRiNv2Gml8usHrg==";
-      };
-    };
     "lodash-4.17.21" = {
       name = "lodash";
       packageName = "lodash";
@@ -1181,15 +1163,6 @@ let
       src = fetchurl {
         url = "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz";
         sha512 = "6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==";
-      };
-    };
-    "nan-2.23.1" = {
-      name = "nan";
-      packageName = "nan";
-      version = "2.23.1";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/nan/-/nan-2.23.1.tgz";
-        sha512 = "r7bBUGKzlqk8oPBDYxt6Z0aEdF1G1rwlMcLk8LCOMbOzf0mG+JUfUzG4fIMWwHWP0iyaLWEQZJmtB7nOHEm/qw==";
       };
     };
     "napi-build-utils-2.0.0" = {
@@ -1417,87 +1390,6 @@ let
         sha512 = "7EAHlyLHI56VEIdK57uwHdHKIaAGbnXPiw0yWbarQZOKaKpvUIgW0jWRVLiatnM+XXlSwsanIBH/hzGMJulMow==";
       };
     };
-    "pg-8.18.0" = {
-      name = "pg";
-      packageName = "pg";
-      version = "8.18.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/pg/-/pg-8.18.0.tgz";
-        sha512 = "xqrUDL1b9MbkydY/s+VZ6v+xiMUmOUk7SS9d/1kpyQxoJ6U9AO1oIJyUWVZojbfe5Cc/oluutcgFG4L9RDP1iQ==";
-      };
-    };
-    "pg-cloudflare-1.3.0" = {
-      name = "pg-cloudflare";
-      packageName = "pg-cloudflare";
-      version = "1.3.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/pg-cloudflare/-/pg-cloudflare-1.3.0.tgz";
-        sha512 = "6lswVVSztmHiRtD6I8hw4qP/nDm1EJbKMRhf3HCYaqud7frGysPv7FYJ5noZQdhQtN2xJnimfMtvQq21pdbzyQ==";
-      };
-    };
-    "pg-connection-string-2.11.0" = {
-      name = "pg-connection-string";
-      packageName = "pg-connection-string";
-      version = "2.11.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/pg-connection-string/-/pg-connection-string-2.11.0.tgz";
-        sha512 = "kecgoJwhOpxYU21rZjULrmrBJ698U2RxXofKVzOn5UDj61BPj/qMb7diYUR1nLScCDbrztQFl1TaQZT0t1EtzQ==";
-      };
-    };
-    "pg-int8-1.0.1" = {
-      name = "pg-int8";
-      packageName = "pg-int8";
-      version = "1.0.1";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/pg-int8/-/pg-int8-1.0.1.tgz";
-        sha512 = "WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==";
-      };
-    };
-    "pg-native-3.5.2" = {
-      name = "pg-native";
-      packageName = "pg-native";
-      version = "3.5.2";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/pg-native/-/pg-native-3.5.2.tgz";
-        sha512 = "3oi+KVil86Vngo4H0IlhBaYSJWdcu8t2f1Y4TkQoQi5oZ9bNeYECGqW3oSGx69mjSZYHoC3h+3jYtqzRgndn5A==";
-      };
-    };
-    "pg-pool-3.11.0" = {
-      name = "pg-pool";
-      packageName = "pg-pool";
-      version = "3.11.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/pg-pool/-/pg-pool-3.11.0.tgz";
-        sha512 = "MJYfvHwtGp870aeusDh+hg9apvOe2zmpZJpyt+BMtzUWlVqbhFmMK6bOBXLBUPd7iRtIF9fZplDc7KrPN3PN7w==";
-      };
-    };
-    "pg-protocol-1.11.0" = {
-      name = "pg-protocol";
-      packageName = "pg-protocol";
-      version = "1.11.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/pg-protocol/-/pg-protocol-1.11.0.tgz";
-        sha512 = "pfsxk2M9M3BuGgDOfuy37VNRRX3jmKgMjcvAcWqNDpZSf4cUmv8HSOl5ViRQFsfARFn0KuUQTgLxVMbNq5NW3g==";
-      };
-    };
-    "pg-types-2.2.0" = {
-      name = "pg-types";
-      packageName = "pg-types";
-      version = "2.2.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz";
-        sha512 = "qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==";
-      };
-    };
-    "pgpass-1.0.5" = {
-      name = "pgpass";
-      packageName = "pgpass";
-      version = "1.0.5";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz";
-        sha512 = "FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==";
-      };
-    };
     "picomatch-2.3.1" = {
       name = "picomatch";
       packageName = "picomatch";
@@ -1505,42 +1397,6 @@ let
       src = fetchurl {
         url = "https://registry.npmjs.org/picomatch/-/picomatch-2.3.1.tgz";
         sha512 = "JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==";
-      };
-    };
-    "postgres-array-2.0.0" = {
-      name = "postgres-array";
-      packageName = "postgres-array";
-      version = "2.0.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/postgres-array/-/postgres-array-2.0.0.tgz";
-        sha512 = "VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA==";
-      };
-    };
-    "postgres-bytea-1.0.1" = {
-      name = "postgres-bytea";
-      packageName = "postgres-bytea";
-      version = "1.0.1";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/postgres-bytea/-/postgres-bytea-1.0.1.tgz";
-        sha512 = "5+5HqXnsZPE65IJZSMkZtURARZelel2oXUEO8rH83VS/hxH5vv1uHquPg5wZs8yMAfdv971IU+kcPUczi7NVBQ==";
-      };
-    };
-    "postgres-date-1.0.7" = {
-      name = "postgres-date";
-      packageName = "postgres-date";
-      version = "1.0.7";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/postgres-date/-/postgres-date-1.0.7.tgz";
-        sha512 = "suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q==";
-      };
-    };
-    "postgres-interval-1.2.0" = {
-      name = "postgres-interval";
-      packageName = "postgres-interval";
-      version = "1.2.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/postgres-interval/-/postgres-interval-1.2.0.tgz";
-        sha512 = "9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==";
       };
     };
     "prebuild-install-7.1.3" = {
@@ -1867,15 +1723,6 @@ let
         sha512 = "4PRT4nh1EImPbt2jASOKHX7PB7I+e4IWNLvkKFDxNhJlfjbYlleYQh285Z/3mPTHSAK/AvdMmw5BNNuYH8ShgQ==";
       };
     };
-    "split2-4.2.0" = {
-      name = "split2";
-      packageName = "split2";
-      version = "4.2.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/split2/-/split2-4.2.0.tgz";
-        sha512 = "UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==";
-      };
-    };
     "sshpk-1.18.0" = {
       name = "sshpk";
       packageName = "sshpk";
@@ -2173,15 +2020,6 @@ let
         sha512 = "l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==";
       };
     };
-    "xtend-4.0.2" = {
-      name = "xtend";
-      packageName = "xtend";
-      version = "4.0.2";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/xtend/-/xtend-4.0.2.tgz";
-        sha512 = "LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==";
-      };
-    };
     "yallist-4.0.0" = {
       name = "yallist";
       packageName = "yallist";
@@ -2208,7 +2046,6 @@ let
       sources."@types/better-sqlite3-7.6.13"
       sources."@types/bun-1.3.9"
       sources."@types/node-25.2.3"
-      sources."@types/pg-8.16.0"
       sources."@yarnpkg/lockfile-1.1.0"
       sources."abbrev-1.1.1"
       sources."ajv-6.12.6"
@@ -2323,7 +2160,6 @@ let
       sources."json-stringify-safe-5.0.1"
       sources."jsonfile-1.0.1"
       sources."jsprim-1.4.2"
-      sources."libpq-1.9.0"
       sources."lodash-4.17.21"
       sources."lru-cache-6.0.0"
       sources."memoirist-0.4.0"
@@ -2343,7 +2179,6 @@ let
       sources."mkdirp-0.3.5"
       sources."mkdirp-classic-0.5.3"
       sources."ms-2.1.3"
-      sources."nan-2.23.1"
       sources."napi-build-utils-2.0.0"
       sources."ncp-0.4.2"
       sources."nijs-0.0.25"
@@ -2394,20 +2229,7 @@ let
       sources."path-is-absolute-1.0.1"
       sources."path-parse-1.0.7"
       sources."performance-now-2.1.0"
-      sources."pg-8.18.0"
-      sources."pg-cloudflare-1.3.0"
-      sources."pg-connection-string-2.11.0"
-      sources."pg-int8-1.0.1"
-      sources."pg-native-3.5.2"
-      sources."pg-pool-3.11.0"
-      sources."pg-protocol-1.11.0"
-      sources."pg-types-2.2.0"
-      sources."pgpass-1.0.5"
       sources."picomatch-2.3.1"
-      sources."postgres-array-2.0.0"
-      sources."postgres-bytea-1.0.1"
-      sources."postgres-date-1.0.7"
-      sources."postgres-interval-1.2.0"
       sources."prebuild-install-7.1.3"
       sources."process-nextick-args-2.0.1"
       sources."proto-list-1.2.4"
@@ -2438,7 +2260,6 @@ let
       sources."spdx-exceptions-2.5.0"
       sources."spdx-expression-parse-3.0.1"
       sources."spdx-license-ids-3.0.22"
-      sources."split2-4.2.0"
       sources."sshpk-1.18.0"
       sources."ssri-5.3.0"
       sources."string-width-1.0.2"
@@ -2485,7 +2306,6 @@ let
       sources."walk-2.3.15"
       sources."wide-align-1.1.5"
       sources."wrappy-1.0.2"
-      sources."xtend-4.0.2"
       sources."yallist-4.0.0"
     ];
     buildInputs = globalBuildInputs;

@@ -10,7 +10,7 @@
  * Extension: To add PostgreSQL, implement a class conforming to DBConnection using 'pg'.
  */
 
-import { PostgresConnection } from "./postgresql";
+//import { PostgresConnection } from "./postgresql";
 import { SqliteConnection } from "./sqlite";
 
 // import { Pool } from 'pg' // For future use
@@ -43,13 +43,13 @@ export type DbConfig =
  *   const db = await createDbConnection({ type: 'sqlite', filePath: 'db.sqlite3' });
  */
 export async function createDbConnection(
-  options: DbConfig
+  options: DbConfig,
 ): Promise<DBConnection> {
   if (options.type === "sqlite") {
     return new SqliteConnection(options.filePath);
   } else if (options.type === "postgres") {
     //   // Implement PostgresConnection conforming to DBConnection
-    return new PostgresConnection(options.connectionString);
+    // return new PostgresConnection(options.connectionString);
   }
   throw new Error("Unsupported DB backend");
 }

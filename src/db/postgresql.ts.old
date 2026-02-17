@@ -3,7 +3,7 @@
  * -----------------------------------------
  */
 
-import { Pool, type PoolClient } from "pg";
+//import { Pool, type PoolClient } from "pg";
 import type { DBConnection, QueryResult } from "./connection";
 
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -21,7 +21,7 @@ export class PostgresConnection implements DBConnection {
 
   constructor(
     private connectionString: string,
-    private debug: boolean = false
+    private debug: boolean = false,
   ) {
     this.db = this.createConnection();
   }
@@ -62,7 +62,7 @@ export class PostgresConnection implements DBConnection {
         ) {
           row[col as any] = (row[col as any] as Date).toISOString();
         }
-      })
+      }),
     );
 
     return rows;
