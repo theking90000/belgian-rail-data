@@ -274,15 +274,6 @@ let
         sha512 = "+UBWWOakIP4Tswh0Bt0QD0alpTY8cb5hvgiYeWCMet9YukHbzuruIEeXC2D7nMJPB12kbh8C7XJykSexEqGKJg==";
       };
     };
-    "bun2nix-2.0.8" = {
-      name = "bun2nix";
-      packageName = "bun2nix";
-      version = "2.0.8";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/bun2nix/-/bun2nix-2.0.8.tgz";
-        sha512 = "pwq35hA81X1Kjsi5Xo69Aii9aY3zZHhWXwqF1QRz/uB35KzKbwJZ16WrhadiG9/T6bjOsRrPZtzuAyqmlXopLw==";
-      };
-    };
     "caseless-0.12.0" = {
       name = "caseless";
       packageName = "caseless";
@@ -1120,15 +1111,6 @@ let
         sha512 = "gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==";
       };
     };
-    "mri-1.2.0" = {
-      name = "mri";
-      packageName = "mri";
-      version = "1.2.0";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/mri/-/mri-1.2.0.tgz";
-        sha512 = "tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==";
-      };
-    };
     "napi-build-utils-2.0.0" = {
       name = "napi-build-utils";
       packageName = "napi-build-utils";
@@ -1624,15 +1606,6 @@ let
         sha512 = "5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==";
       };
     };
-    "sade-1.8.1" = {
-      name = "sade";
-      packageName = "sade";
-      version = "1.8.1";
-      src = fetchurl {
-        url = "https://registry.npmjs.org/sade/-/sade-1.8.1.tgz";
-        sha512 = "xal3CZX1Xlo/k4ApwCFrHVACi9fBqJ7V+mwhBsuf/1IOKbBy098Fex+Wa/5QMubw09pSZ/u8EY8PWgevJsXp1A==";
-      };
-    };
     "safe-buffer-5.1.2" = {
       name = "safe-buffer";
       packageName = "safe-buffer";
@@ -2126,7 +2099,6 @@ let
       sources."buffer-from-1.1.2"
       sources."builtins-1.0.3"
       sources."bun-types-1.3.9"
-      sources."bun2nix-2.0.8"
       sources."caseless-0.12.0"
       sources."chownr-1.1.4"
       sources."code-point-at-1.1.0"
@@ -2228,7 +2200,6 @@ let
       })
       sources."mkdirp-0.3.5"
       sources."mkdirp-classic-0.5.3"
-      sources."mri-1.2.0"
       sources."napi-build-utils-2.0.0"
       sources."ncp-0.4.2"
       sources."nijs-0.0.25"
@@ -2307,7 +2278,6 @@ let
       sources."reusify-1.1.0"
       sources."rimraf-2.2.8"
       sources."run-parallel-1.2.0"
-      sources."sade-1.8.1"
       sources."safe-buffer-5.2.1"
       sources."safer-buffer-2.1.2"
       sources."semver-7.7.4"
