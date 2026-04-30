@@ -4,17 +4,24 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    bun2nix = {
+      url = "github:nix-community/bun2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, bun2nix }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ bun2nix.overlays.default ];
+        };
         pname = "sncb-insights";
         version = "2.0.0";
       in
       {
-        packages.default = pkgs.stdenv.mkDerivation {
+        packages.default = pkgs.bun2nix.mkDerivation {
           inherit pname version;
 
           src = pkgs.lib.cleanSourceWith {
@@ -34,18 +41,27 @@
                 "data.db"
                 "logs.db"
                 "tracked.json"
-                "flake.nix"
-                "flake.lock"
                 "default.nix"
                 "node-env.nix"
                 "node-packages.nix"
                 "yarn.lock"
                 "package-lock.json"
               ]);
+
+            # Keep: src/, package.json, bun.lock, bun.nix, tsconfig.json, build.sh, install.sh
           };
 
+          bunDeps = pkgs.bun2nix.fetchBunDeps {
+            bunNix = ./bun.nix;
+            autoPatchElf = pkgs.stdenv.hostPlatform.isLinux;
+            nativeBuildInputs = with pkgs; [ sqlite ];
+          };
+
+          module = "src/main.ts";
+
+          bunCompileToBytecode = false;
+
           nativeBuildInputs = with pkgs; [
-            bun
             python3
             gcc
             gnumake
@@ -55,33 +71,6 @@
           buildInputs = with pkgs; [
             sqlite
           ];
-
-          npm_config_build_from_source = "true";
-
-          dontFixup = true;
-
-          buildPhase = ''
-            runHook preBuild
-
-            export HOME="$TMPDIR"
-
-            echo "[flake] Installing dependencies with Bun..."
-            bun install --frozen-lockfile --production
-
-            echo "[flake] Building standalone binary..."
-            bun build --compile --outfile="sncb-insights" ./src/main.ts
-
-            runHook postBuild
-          '';
-
-          installPhase = ''
-            runHook preInstall
-
-            mkdir -p "$out/bin"
-            install -m 755 sncb-insights "$out/bin/sncb-insights"
-
-            runHook postInstall
-          '';
 
           meta = with pkgs.lib; {
             description = "Belgian Rail Data analytics and tracking";
@@ -106,6 +95,7 @@
 
           packages = with pkgs; [
             bun
+            bun2nix.packages.${system}.default
             sqlite
           ];
 
@@ -113,10 +103,10 @@
 
           shellHook = ''
             echo "=== SNCB Insights Development Shell ==="
-            echo "  bun install    - install dependencies"
-            echo "  bun run start  - run the application"
-            echo "  bun build --compile ...  - compile to standalone binary"
-            echo "  nix build .#   - build the Nix package"
+            echo "  bun install      - install deps + regenerate bun.nix"
+            echo "  bun run start    - run the application"
+            echo "  nix build .#     - build the Nix package"
+            echo "  nix run .# -- --server  - run via Nix"
           '';
         };
 
